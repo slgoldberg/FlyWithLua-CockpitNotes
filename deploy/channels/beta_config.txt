@@ -1,0 +1,4 @@
+module|http://stevegoldberg.com/skunkcrafts/depot/beta/CockpitNotes
+name|CockpitNotes
+version|1.0.0b1
+locked|false

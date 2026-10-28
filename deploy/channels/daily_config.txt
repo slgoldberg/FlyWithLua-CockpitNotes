@@ -1,0 +1,4 @@
+module|http://stevegoldberg.com/skunkcrafts/depot/daily/CockpitNotes
+name|CockpitNotes
+version|1.0.0d1
+locked|false
