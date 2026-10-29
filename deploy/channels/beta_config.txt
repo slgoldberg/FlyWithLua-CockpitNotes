@@ -1,4 +1,4 @@
-module|http://stevegoldberg.com/skunkcrafts/depot/beta/CockpitNotes
+module|https://slgoldberg.github.io/FlyWithLua-CockpitNotes/depot/beta/CockpitNotes
 name|CockpitNotes
-version|1.0.0b1
+version|1.0.0
 locked|false

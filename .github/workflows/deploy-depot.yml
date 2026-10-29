@@ -1,0 +1,60 @@
+name: Deploy SkunkCrafts Depot
+
+on:
+  push:
+    branches: [ master ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Determine Target Channel
+        id: channel
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "channel=release" >> $GITHUB_OUTPUT
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "channel=release" >> $GITHUB_OUTPUT
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stage Payload & Generate Depot Manifests
+        run: |
+          chmod +x deploy/stage.sh deploy/xpdepot.py
+          ./deploy/stage.sh ${{ steps.channel.outputs.channel }} --build-depot
+
+      - name: Deploy to GitHub Pages (Depot)
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/depot
+          keep_files: true
+
+      - name: Package Release Zip
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          mkdir -p build/dist
+          cd build/staging/${{ steps.channel.outputs.channel }}
+          zip -r ../../dist/CockpitNotes-${{ steps.channel.outputs.tag }}.zip CockpitNotes
+
+      - name: Upload Release Asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/dist/CockpitNotes-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
