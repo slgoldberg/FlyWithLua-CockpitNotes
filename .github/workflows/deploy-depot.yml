@@ -36,10 +36,10 @@ jobs:
             echo "tag=latest" >> $GITHUB_OUTPUT
           fi
 
-      - name: Stage Payload & Generate Depot Manifests
+      - name: Stage Payload & Generate Depot Manifests (All Channels)
         run: |
           chmod +x deploy/stage.sh deploy/xpdepot.py
-          ./deploy/stage.sh ${{ steps.channel.outputs.channel }} --build-depot
+          ./deploy/stage.sh all --build-depot
 
       - name: Deploy to GitHub Pages (Depot)
         uses: peaceiris/actions-gh-pages@v3
@@ -52,7 +52,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           mkdir -p build/dist
-          cd build/staging/${{ steps.channel.outputs.channel }}
+          cd build/staging/release
           zip -r ../../dist/CockpitNotes-${{ steps.channel.outputs.tag }}.zip CockpitNotes
 
       - name: Upload Release Asset

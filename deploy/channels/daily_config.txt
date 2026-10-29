@@ -1,4 +1,6 @@
 module|https://slgoldberg.github.io/FlyWithLua-CockpitNotes/depot/daily/CockpitNotes
 name|CockpitNotes
-version|1.0.0
+version|1.0.0d1
 locked|false
+channel.beta|https://slgoldberg.github.io/FlyWithLua-CockpitNotes/depot/beta/CockpitNotes
+channel.daily|https://slgoldberg.github.io/FlyWithLua-CockpitNotes/depot/daily/CockpitNotes

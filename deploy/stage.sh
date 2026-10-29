@@ -2,17 +2,17 @@
 # ==============================================================================
 # CockpitNotes Staging & Packaging Tool
 # ------------------------------------------------------------------------------
-# Assembles the 3-tier SkunkCrafts staging payload for a specified channel,
+# Assembles the 3-tier SkunkCrafts staging payload for a specified channel (or all),
 # optionally generates depot manifests via xpdepot.py, and optionally mirrors
 # the release client package into FlyWithLua/Scripts/.
 #
 # Usage:
-#   ./deploy/stage.sh [release|beta|daily] [--build-depot] [--sync-fwl]
+#   ./deploy/stage.sh [release|beta|daily|all] [--build-depot] [--sync-fwl]
 # ==============================================================================
 
 set -euo pipefail
 
-CHANNEL="${1:-release}"
+TARGET="${1:-release}"
 SYNC_FWL=false
 BUILD_DEPOT=false
 
@@ -29,34 +29,45 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 FWL_ROOT="$(cd "$REPO_ROOT/../.." && pwd)"
 
-CHANNEL_CFG="$REPO_ROOT/deploy/channels/${CHANNEL}_config.txt"
-if [[ ! -f "$CHANNEL_CFG" ]]; then
-    echo "Error: Unknown channel configuration: $CHANNEL_CFG"
-    echo "Available channels: release, beta, daily"
-    exit 1
-fi
+stage_channel() {
+    local CHANNEL="$1"
+    local CHANNEL_CFG="$REPO_ROOT/deploy/channels/${CHANNEL}_config.txt"
+    if [[ ! -f "$CHANNEL_CFG" ]]; then
+        echo "Error: Unknown channel configuration: $CHANNEL_CFG"
+        echo "Available channels: release, beta, daily, all"
+        exit 1
+    fi
 
-STAGING_DIR="$REPO_ROOT/build/staging/$CHANNEL/CockpitNotes"
-echo "==> Staging CockpitNotes for channel: $CHANNEL"
-rm -rf "$STAGING_DIR"
-mkdir -p "$STAGING_DIR/notes"
+    local STAGING_DIR="$REPO_ROOT/build/staging/$CHANNEL/CockpitNotes"
+    echo "==> Staging CockpitNotes for channel: $CHANNEL"
+    rm -rf "$STAGING_DIR"
+    mkdir -p "$STAGING_DIR/notes"
 
-# 1. Copy runtime files
-cp -a "$REPO_ROOT/CockpitNotes.lua" "$STAGING_DIR/"
-cp -a "$REPO_ROOT/notes/"* "$STAGING_DIR/notes/"
+    # 1. Copy runtime files
+    cp -a "$REPO_ROOT/CockpitNotes.lua" "$STAGING_DIR/"
+    cp -a "$REPO_ROOT/notes/"* "$STAGING_DIR/notes/"
 
-# 2. Copy SkunkCrafts server/depot generator configuration
-cp -a "$CHANNEL_CFG" "$STAGING_DIR/skunkcrafts_updater_config.txt"
-cp -a "$REPO_ROOT/deploy/skunkcrafts_updater_oncelist.txt" "$STAGING_DIR/"
-cp -a "$REPO_ROOT/deploy/skunkcrafts_updater_blacklist.txt" "$STAGING_DIR/"
+    # 2. Copy SkunkCrafts server/depot generator configuration
+    cp -a "$CHANNEL_CFG" "$STAGING_DIR/skunkcrafts_updater_config.txt"
+    cp -a "$REPO_ROOT/deploy/skunkcrafts_updater_oncelist.txt" "$STAGING_DIR/"
+    cp -a "$REPO_ROOT/deploy/skunkcrafts_updater_blacklist.txt" "$STAGING_DIR/"
 
-echo "==> Staging complete at: $STAGING_DIR"
+    echo "==> Staging complete at: $STAGING_DIR"
 
-# 3. Optional: Build local depot manifests using xpdepot.py
-if [[ "$BUILD_DEPOT" == true ]]; then
-    DEPOT_DIR="$REPO_ROOT/build/depot/depot/$CHANNEL/CockpitNotes"
-    echo "==> Generating depot manifests with xpdepot.py..."
-    python3 "$SCRIPT_DIR/xpdepot.py" --stage "$STAGING_DIR" --depot "$DEPOT_DIR"
+    # 3. Optional: Build local depot manifests using xpdepot.py
+    if [[ "$BUILD_DEPOT" == true ]]; then
+        local DEPOT_DIR="$REPO_ROOT/build/depot/depot/$CHANNEL/CockpitNotes"
+        echo "==> Generating depot manifests with xpdepot.py for $CHANNEL..."
+        python3 "$SCRIPT_DIR/xpdepot.py" --stage "$STAGING_DIR" --depot "$DEPOT_DIR"
+    fi
+}
+
+if [[ "$TARGET" == "all" ]]; then
+    stage_channel "release"
+    stage_channel "beta"
+    stage_channel "daily"
+else
+    stage_channel "$TARGET"
 fi
 
 # 4. Optional: Sync client release package to FlyWithLua

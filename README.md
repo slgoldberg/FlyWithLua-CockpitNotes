@@ -55,7 +55,7 @@ This repository serves as the official reference implementation for packaging a 
   │    └── deploy-depot.yml          <-- Automated GitHub Pages depot publisher
   └── README.md
             │
-            ▼ (./deploy/stage.sh <channel> --build-depot)
+            ▼ (./deploy/stage.sh all --build-depot)
   LAYER 2: STAGING GROUND
   build/staging/<channel>/CockpitNotes/
   ├── CockpitNotes.lua
@@ -77,15 +77,27 @@ This repository serves as the official reference implementation for packaging a 
 
 1. **Turnkey Hosting via GitHub Pages:**
    * No web servers or FTP credentials needed.
-   * On every push to `master` (or git tag `v*`), GitHub Actions runs `deploy/xpdepot.py` headlessly, builds the depot manifests, and deploys to the `gh-pages` branch.
+   * On every push to `master` (or git tag `v*`), GitHub Actions runs `deploy/xpdepot.py` headlessly, builds the depot manifests for all channels, and deploys to the `gh-pages` branch.
    * SkunkCrafts Updater downloads updates directly over HTTPS from GitHub Pages.
-2. **Server Config vs. Client Config:**
+2. **Modern Multi-Channel Configuration (`channel.<name>`):**
+   * Multiple channels (`Main`, `beta`, `daily`, etc.) are declared directly inside the single `skunkcrafts_updater.cfg` file:
+     ```text
+     module|https://<user>.github.io/<repo>/depot/release/CockpitNotes
+     name|CockpitNotes
+     version|1.0.0
+     locked|false
+     channel.beta|https://<user>.github.io/<repo>/depot/beta/CockpitNotes
+     channel.daily|https://<user>.github.io/<repo>/depot/daily/CockpitNotes
+     ```
+   * The SkunkCrafts Updater client detects these keys and exposes an interactive **Channel** dropdown (`Main`, `beta`, `daily`) directly in the desktop GUI.
+   * Users switch channels with a single click in the app without editing text files.
+3. **Server Config vs. Client Config:**
    * In Staging (Layer 2), the configuration file is named **`skunkcrafts_updater_config.txt`**.
    * When `xpdepot.py` publishes to the Depot (Layer 3), it translates `skunkcrafts_updater_config.txt` into **`skunkcrafts_updater.cfg`** for client consumption.
-3. **Protecting User Edits via `oncelist.txt`:**
+4. **Protecting User Edits via `oncelist.txt`:**
    * Files declared in `skunkcrafts_updater_oncelist.txt` (such as `notes/cockpit_notes.md`) are assigned a CRC of **`-1`** in the remote whitelist.
    * SkunkCrafts Updater installs `-1` files on first setup, but **never overwrites them during subsequent updates**, preserving the pilot's custom notes forever.
-4. **No Unintentional Deletions:**
+5. **No Unintentional Deletions:**
    * SkunkCrafts Updater is manifest-driven (whitelist). It never deletes unlisted local files unless they are explicitly added to `skunkcrafts_updater_blacklist.txt`.
 
 ---
@@ -101,15 +113,17 @@ This repository serves as the official reference implementation for packaging a 
      name|<AddonName>
      version|1.0.0
      locked|false
+     channel.beta|https://<your-username>.github.io/<your-repo>/depot/beta/<AddonName>
+     channel.daily|https://<your-username>.github.io/<your-repo>/depot/daily/<AddonName>
      ```
 3. **Push to GitHub:**
    * Push your changes or push a version tag (`git tag v1.0.0 && git push origin v1.0.0`).
-   * GitHub Actions runs `.github/workflows/deploy-depot.yml`, runs `xpdepot.py`, and publishes your public depot automatically to GitHub Pages.
+   * GitHub Actions runs `.github/workflows/deploy-depot.yml`, runs `xpdepot.py` for all channels, and publishes your public depot automatically to GitHub Pages.
 4. **Test locally (Optional):**
    ```bash
-   # Stage and generate depot manifests locally
-   ./deploy/stage.sh release --build-depot
+   # Stage and generate depot manifests locally for all channels
+   ./deploy/stage.sh all --build-depot
 
    # Stage and synchronize into local FlyWithLua for testing in X-Plane
-   ./deploy/stage.sh release --build-depot --sync-fwl
+   ./deploy/stage.sh all --build-depot --sync-fwl
    ```
