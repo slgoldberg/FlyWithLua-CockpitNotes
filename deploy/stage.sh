@@ -78,7 +78,11 @@ if [[ "$SYNC_FWL" == true ]]; then
     cp -a "$REPO_ROOT/CockpitNotes.lua" "$FWL_DEST/"
     cp -a "$REPO_ROOT/notes/"* "$FWL_DEST/notes/"
     
-    # In FlyWithLua distribution, the client config is named skunkcrafts_updater.cfg
-    cp -a "$REPO_ROOT/deploy/channels/release_config.txt" "$FWL_DEST/skunkcrafts_updater.cfg"
+    # In FlyWithLua distribution, the client config matches the generated release manifest
+    if [[ -f "$REPO_ROOT/build/depot/depot/release/CockpitNotes/skunkcrafts_updater.cfg" ]]; then
+        cp -a "$REPO_ROOT/build/depot/depot/release/CockpitNotes/skunkcrafts_updater.cfg" "$FWL_DEST/skunkcrafts_updater.cfg"
+    else
+        cp -a "$REPO_ROOT/deploy/channels/release_config.txt" "$FWL_DEST/skunkcrafts_updater.cfg"
+    fi
     echo "==> FlyWithLua distribution payload synchronized successfully!"
 fi
