@@ -415,14 +415,151 @@ local templates = {
 - `[ ]` Thrust reversers checked: <badge green>ARMED</badge>
 ]],
 
-    ["Diversion Briefing"] = [[# Diversion Briefing
-* **Alternate Destination:** `KSBN (South Bend Regional)`
-* **Bearing / Distance:** `085° / 64 NM`
-* **Estimated Fuel at Alternate:** `4,100 lbs` (Min Reserve: 2,400 lbs)
-* **Longest Runway:** `09R/27L (8,414 x 150 ft)`
-* **Current Weather:** `310° @ 14kt G22, 6SM -RA, OVC 018`
-* **Primary Nav Aid:** `ILS 27L (109.90 MHz / CRS 274°)`
-* **Decision Altitude (DA):** `973 ft MSL (200 ft AGL)`
+    ["Fuel & Weight Planning"] = [[# Fuel & Weight Planning
+
+* **Aircraft:** `B737-800 / A320` | **Route:** `KORD -> KMSP`
+* **Cruise:** `FL340 / M0.78` | **Cost Index:** `28`
+
+---
+
+## Weight & Balance Limits
+* **Operating Empty Weight (OEW):** `91,300 lbs`
+* **Payload (Pax + Bags + Cargo):** `35,400 lbs` (158 Pax / 4,800 lbs Bag)
+* **Zero Fuel Weight (ZFW):** `126,700 lbs` (Max: `138,300 lbs`) <badge green>+11,600 lbs OK</badge>
+* **Planned Takeoff Weight (TOW):** `145,500 lbs` (Max: `174,200 lbs`) <badge green>+28,700 lbs OK</badge>
+* **Estimated Landing Weight (ELW):** `136,100 lbs` (Max: `146,300 lbs`) <badge green>+10,200 lbs OK</badge>
+* **Center of Gravity (CG):** `21.4% MAC` | **Takeoff Trim:** <pill green>5.2 ANU</pill>
+
+---
+
+## Fuel Planning & Reserves (FAR / ICAO)
+* **Taxi Out Fuel:** `800 lbs` (APU + single-engine taxi)
+* **Trip Fuel (KORD-KMSP):** `9,400 lbs` (Enroute burn at FL340)
+* **Contingency Fuel (5%):** `470 lbs` (Route / enroute wind margin)
+* **Alternate Fuel (to KSBN):** `3,100 lbs` (Climb, cruise FL220, descent & missed)
+* **Final Reserve Fuel:** `2,450 lbs` (ICAO 30 min hold @ 1,500 ft AGL)
+* **Extra / Discretionary:** `2,580 lbs` (Terminal vectoring & winter de-icing)
+
+---
+
+### Fuel Thresholds & Bingo State
+* **Planned Ramp / Block Fuel:** <pill green>18,800 lbs</pill>
+* **Minimum Takeoff Fuel:** `18,000 lbs`
+* **Diversion Bingo Fuel (MSP -> KSBN):** <badge yellow>5,550 lbs</badge>
+* **Emergency Fuel Threshold (Mayday):** <badge red>2,450 lbs</badge>
+
+---
+
+### Pre-Departure Verification Checklist
+- `[ ]` Totalizer gauge verified against fuel uplift receipt (`18,800 lbs`)
+- `[ ]` Cross-feed valve tested and set closed
+- `[ ]` FMC PERF INIT entered: ZFW `126.7`, Reserves `5.5`, Cost Index `28`
+- `[ ]` Takeoff stabilizer trim `5.2 ANU` dialed & confirmed in green band
+- `[ ]` Takeoff V-Speeds calculated for runway length & condition
+]],
+
+    ["Diversion Briefing"] = [[# In-Flight Diversion Briefing
+
+* **Primary Destination:** `KMSP (Minneapolis-St. Paul)`
+* **Designated Alternate:** `KSBN (South Bend Regional)`
+* **Diversion Reason:** `Below Minima / Weather / System Advisory`
+
+---
+
+## Alternate Airport Overview
+* **Airport & Elevation:** `KSBN / SBN` | **Field Elevation:** `799 ft MSL`
+* **Bearing & Distance:** `085° Magnetic / 64 NM`
+* **Estimated Time Enroute (ETE):** `14 minutes` (High-speed descent profile)
+* **Longest Runway:** `Runway 09R/27L (8,414 x 150 ft - Grooved Concrete)`
+* **Primary Nav Aid:** `ILS 27L (Freq: 109.90 MHz | Course: 274°)`
+* **Approach Minima / DA:** <pill blue>999 ft MSL (200 ft AGL) / RVR 2400</pill>
+
+---
+
+## Weather Minima & Runway Conditions
+* **Current METAR:** `KSBN 281854Z 31014G22KT 6SM -RA SCT018 OVC025 08/04 A2994`
+* **Surface Wind:** `310° @ 14 kt, gusts 22 kt`
+* **Runway 27L Component:** `Headwind 11 kt, Crosswind 9 kt from right`
+* **Braking Action:** GOOD (Runway wet, no standing water reported)
+
+---
+
+## Fuel Reserves & Bingo Status
+* **Fuel on Board (FOB) at Decision:** `7,600 lbs`
+* **Planned Burn to Alternate:** `2,100 lbs`
+* **Estimated FOB on Touchdown:** `5,500 lbs`
+* **Final Legal Reserve (30 min):** `2,450 lbs`
+* **Usable Holding Margin:** <badge green>+3,050 lbs (~38 min hold)</badge>
+* **Minimum Diversion Bingo:** <badge yellow>5,550 lbs</badge>
+* **Emergency Fuel (Mayday):** <badge red>2,450 lbs</badge>
+
+---
+
+## ATC & Cockpit Diversion Checklist
+- `[ ]` **Aviate:** Maintain positive aircraft control; turn toward alternate heading (`085°`)
+- `[ ]` **Declare Intentions:** Advise ATC ("Request diversion to alternate KSBN")
+- `[ ]` **Squawk & Fuel State:** State souls on board and fuel endurance to ATC if requested
+- `[ ]` **FMS Setup:** Select KSBN as active destination, insert ILS 27L approach
+- `[ ]` **Radios & Nav Aids:** Set NAV1 `109.90`, course `274°`, monitor ATIS `120.675`
+- `[ ]` **Landing Performance:** Recalculate landing distance, verify VREF and VAPP
+- `[ ]` **Cabin Crew Notification:** Brief flight attendants (NITS briefing: Nature, Intention, Time, Special)
+- `[ ]` **Passenger PA:** Deliver calm, informative diversion announcement
+- `[ ]` **Approach & Landing Checklist:** Completed before initial approach fix
+]],
+
+    ["METAR / TAF Scratchpad"] = [[# METAR & TAF Weather Scratchpad
+
+* **Flight:** `KORD -> KMSP` | **Briefing Time:** `1850Z`
+* **Flight Category:** ORD <badge green>VFR</badge> | MSP <badge yellow>MVFR</badge>
+
+---
+
+## Departure Weather (KORD)
+```text
+KORD 281851Z 28014G21KT 10SM BKN045 OVC090 12/03 A3012 RMK AO2 SLP201
+```
+* **Station & Time:** `KORD (Chicago O'Hare)` @ `18:51 UTC`
+* **Wind:** `280° at 14 kt, gusts to 21 kt`
+* **Visibility:** `10 Statute Miles (Unrestricted)`
+* **Clouds / Ceiling:** `Broken 4,500 ft AGL, Overcast 9,000 ft AGL`
+* **Temperature / Dew Point:** `12°C / 03°C` (Spread: `9°C`)
+* **Altimeter (QNH):** <pill green>30.12 inHg (1020 hPa)</pill>
+* **Active Runways:** `28C, 28R` (Departures)
+
+---
+
+## Destination Weather (KMSP)
+```text
+KMSP 281853Z 33018G26KT 4SM -SN BLSN BKN015 OVC030 M02/M06 A2988 RMK AO2
+```
+* **Station & Time:** `KMSP (Minneapolis-St. Paul)` @ `18:53 UTC`
+* **Wind:** `330° at 18 kt, gusts to 26 kt`
+* **Visibility:** `4 Statute Miles in Light Snow & Blowing Snow (-SN BLSN)`
+* **Ceiling & Sky:** `Broken 1,500 ft AGL (Ceiling), Overcast 3,000 ft AGL`
+* **Temperature / Dew Point:** `-02°C / -06°C`
+* **Altimeter (QNH):** <pill blue>29.88 inHg (1012 hPa)</pill>
+* **Surface Condition:** Contaminated runway; braking action Medium
+
+---
+
+## Destination Forecast (TAF Copy Pad)
+```text
+TAF KMSP 281720Z 2818/2924 34016G24KT 4SM -SN BKN018 OVC035
+  TEMPO 2819/2823 2SM -SN BKN010
+  FM290200 32012KT 6SM NSW BKN025
+  FM291200 29010KT P6SM SKC
+```
+* **Arrival Trend (19:00Z - 21:00Z):** `TEMPO 2SM in light snow, ceiling 1,000 ft AGL`
+* **Runway In Use:** Expect `Runway 30L / 30R` (ILS Cat I / Cat II available)
+* **Crosswind Calculation:** `340° vs 300° runway heading = 40° angle @ 16G24kt (~15kt X-Wind)`
+
+---
+
+## Weather Verification Checklist
+- `[ ]` Destination altimeter copied: `29.88 inHg`
+- `[ ]` Engine & wing anti-ice requirements briefed for descent into freezing clouds
+- `[ ]` Approach category and minima briefed for ILS 30L/30R
+- `[ ]` Cold temperature altitude corrections applied if airport temp < 0°C
 ]],
 
     ["FlyWithLua Scratchpad"] = [[# FlyWithLua Scratchpad
@@ -1110,7 +1247,7 @@ local function md_editor_render_content()
                 print("[FlyWithLua CockpitNotes] Error in Templates Combo: " .. tostring(err))
             end
         end
-        show_tooltip("**Aviation Templates**\n\nLoad pre-formatted cockpit checklists and scratchpads:\n* **ATIS Copy Pad**\n* **IFR Clearance (CRAFT)**\n* **Pre-Flight Checklist**\n* **Diversion Briefing**\n* **FlyWithLua Scratchpad**")
+        show_tooltip("**Aviation Templates**\n\nLoad pre-formatted cockpit checklists and scratchpads:\n* **ATIS Copy Pad**\n* **IFR Clearance (CRAFT)**\n* **Pre-Flight Checklist**\n* **Fuel & Weight Planning**\n* **Diversion Briefing**\n* **METAR / TAF Scratchpad**\n* **FlyWithLua Scratchpad**")
 
         imgui.Separator()
     end

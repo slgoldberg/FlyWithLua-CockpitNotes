@@ -21,7 +21,10 @@
   * **ATIS Copy Pad:** Airport, weather, altimeter, runways, and NOTAMs.
   * **IFR Clearance (CRAFT):** Clearance limit, Route, Altitude, Frequency, Transponder/Squawk with checklist confirmation.
   * **Pre-Flight Checklist:** Interactive task list.
-  * **Diversion Briefing:** Quick diversion planning fields.
+  * **Fuel & Weight Planning:** Takeoff/landing limits, payload, FAR/ICAO fuel burn, and reserve thresholds.
+  * **Diversion Briefing:** Alternate airport specs, weather minima, fuel reserves, and ATC divert checklist.
+  * **METAR & TAF Scratchpad:** Decoded weather observations, terminal forecasts, and winter ops checklist.
+  * **FlyWithLua Scratchpad:** Test datarefs, avionics badges, and Lua logic.
 * **Multi-Note Storage & Finder Integration:**
   * Switch between notes via the top-right dropdown.
   * Click **+ New** to instantly create and name a new note.

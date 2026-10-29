@@ -1,1 +1,4 @@
 notes/cockpit_notes.md
+notes/fuel_and_weight.md
+notes/diversion_briefing.md
+notes/metar_taf_scratchpad.md
