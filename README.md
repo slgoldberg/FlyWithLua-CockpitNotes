@@ -87,9 +87,9 @@ This repository serves as the official reference implementation for packaging a 
      version|1.0.0
      locked|false
      channel.beta|https://<user>.github.io/<repo>/depot/beta/CockpitNotes
-     channel.daily|https://<user>.github.io/<repo>/depot/daily/CockpitNotes
+     # Optional: add extra channels as desired (e.g. channel.daily|...)
      ```
-   * The SkunkCrafts Updater client detects these keys and exposes an interactive **Channel** dropdown (`Main`, `beta`, `daily`) directly in the desktop GUI.
+   * The SkunkCrafts Updater client detects these keys and exposes an interactive **Channel** dropdown (`Main`, `beta`) directly in the desktop GUI.
    * Users switch channels with a single click in the app without editing text files.
 3. **Server Config vs. Client Config:**
    * In Staging (Layer 2), the configuration file is named **`skunkcrafts_updater_config.txt`**.
@@ -114,7 +114,6 @@ This repository serves as the official reference implementation for packaging a 
      version|1.0.0
      locked|false
      channel.beta|https://<your-username>.github.io/<your-repo>/depot/beta/<AddonName>
-     channel.daily|https://<your-username>.github.io/<your-repo>/depot/daily/<AddonName>
      ```
 3. **Push to GitHub:**
    * Push your changes or push a version tag (`git tag v1.0.0 && git push origin v1.0.0`).

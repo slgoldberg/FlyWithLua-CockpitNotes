@@ -146,9 +146,12 @@ def build_depot_headless(stage_dir: str, depot_dir: str, lock_status: bool = Fal
     if os.path.isfile(lcl_cfg_path):
         with open(lcl_cfg_path, "r", encoding="utf-8") as fh:
             for line in fh:
-                parts = line.strip().split("|", 1)
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split("|", 1)
                 if len(parts) == 2:
-                    cfg_entries[parts[0]] = parts[1]
+                    cfg_entries[parts[0].strip()] = parts[1].strip()
     
     if lock_status:
         cfg_entries["locked"] = "true"
