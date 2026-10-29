@@ -75,13 +75,16 @@ if [[ "$SYNC_FWL" == true ]]; then
     echo "==> Mirroring client release package to: $FWL_DEST"
     rm -rf "$FWL_DEST"
     mkdir -p "$FWL_DEST/notes"
-    cp -a "$REPO_ROOT/CockpitNotes.lua" "$FWL_DEST/"
-    cp -a "$REPO_ROOT/notes/"* "$FWL_DEST/notes/"
     
-    # In FlyWithLua distribution, the client config matches the generated release manifest
-    if [[ -f "$REPO_ROOT/build/depot/depot/release/CockpitNotes/skunkcrafts_updater.cfg" ]]; then
-        cp -a "$REPO_ROOT/build/depot/depot/release/CockpitNotes/skunkcrafts_updater.cfg" "$FWL_DEST/skunkcrafts_updater.cfg"
+    # Mirror directly from the generated release depot payload if available
+    RELEASE_DEPOT="$REPO_ROOT/build/depot/depot/release/CockpitNotes"
+    if [[ -d "$RELEASE_DEPOT" ]]; then
+        cp -a "$RELEASE_DEPOT/CockpitNotes.lua" "$FWL_DEST/"
+        cp -a "$RELEASE_DEPOT/notes/"* "$FWL_DEST/notes/"
+        cp -a "$RELEASE_DEPOT/skunkcrafts_updater.cfg" "$FWL_DEST/"
     else
+        cp -a "$REPO_ROOT/CockpitNotes.lua" "$FWL_DEST/"
+        cp -a "$REPO_ROOT/notes/"* "$FWL_DEST/notes/"
         cp -a "$REPO_ROOT/deploy/channels/release_config.txt" "$FWL_DEST/skunkcrafts_updater.cfg"
     fi
     echo "==> FlyWithLua distribution payload synchronized successfully!"
