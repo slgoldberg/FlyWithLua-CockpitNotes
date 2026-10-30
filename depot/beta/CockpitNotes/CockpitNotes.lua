@@ -13,6 +13,9 @@ if not SUPPORTS_FLOATING_WINDOWS then
     return
 end
 
+-- Anchor script directory at boot so get_notes_dir() never decays to root Scripts/
+local SCRIPT_BASE_DIR = (CURRENT_SCRIPT_DIRECTORY and #CURRENT_SCRIPT_DIRECTORY > 0) and CURRENT_SCRIPT_DIRECTORY or "FlyWithLua/Scripts/CockpitNotes"
+
 -- ----------------------------------------------------------------------------
 -- ImGui Color Constants & Helpers
 -- ----------------------------------------------------------------------------
@@ -96,10 +99,7 @@ end
 
 local function get_notes_dir()
     local sep = is_windows and "\\" or "/"
-    local base_dir = "FlyWithLua"
-    if CURRENT_SCRIPT_DIRECTORY and #CURRENT_SCRIPT_DIRECTORY > 0 then
-        base_dir = CURRENT_SCRIPT_DIRECTORY:gsub("[/\\]+$", "")
-    end
+    local base_dir = SCRIPT_BASE_DIR:gsub("[/\\]+$", "")
     if is_windows then
         base_dir = base_dir:gsub("/", "\\")
     else
@@ -113,10 +113,7 @@ end
 
 local function get_legacy_save_path()
     local sep = is_windows and "\\" or "/"
-    local base_dir = "FlyWithLua"
-    if CURRENT_SCRIPT_DIRECTORY and #CURRENT_SCRIPT_DIRECTORY > 0 then
-        base_dir = CURRENT_SCRIPT_DIRECTORY:gsub("[/\\]+$", "")
-    end
+    local base_dir = SCRIPT_BASE_DIR:gsub("[/\\]+$", "")
     if is_windows then
         base_dir = base_dir:gsub("/", "\\")
     else
@@ -168,7 +165,7 @@ local alt = get("sim/flightmodel/position/elevation")
 
 -- Rich Markdown content for the "About" dialog
 local about_markdown_text = [[# FlyWithLua Cockpit Notes
-<badge green>v1.0.1 Standalone</badge> <pill blue>Phase 3 Suite</pill>
+<badge green>v1.0.2 Beta</badge> <pill blue>Phase 3 Suite</pill>
 
 An interactive in-cockpit Markdown scratchpad and flight notes system for X-Plane 12 flight operations.
 
@@ -830,49 +827,40 @@ local function md_editor_render_content()
     end
     show_tooltip("**About Cockpit Markdown Scratchpad**\n\nView features, version, and library credits.")
 
-    -- Status notification aligned above the persistence buttons on the right
+    local cur_top_x = (imgui.GetCursorPosX and imgui.GetCursorPosX()) or 260
+    local zoom_group_w = 210
+    local zoom_start = avail_w - zoom_group_w
+
+    -- Status notification aligned between About and Zoom
     if os.time() - save_status_time < 3 and #save_status_msg > 0 then
         local msg_w = 200
         if imgui.CalcTextSize then
             local tw = imgui.CalcTextSize(save_status_msg)
             msg_w = tw + 24
         end
-        local badge_x = math.max(380, avail_w - msg_w)
-        imgui.SameLine(badge_x)
-        if imgui.Badge then
-            local variant = save_status_msg:match("^Error") and "danger" or "success"
-            imgui.Badge(save_status_msg, variant)
-        else
-            imgui.TextColored(0.2, 0.8, 0.2, 1.0, save_status_msg)
+        local badge_x = zoom_start - msg_w - 12
+        if badge_x > cur_top_x + 10 then
+            imgui.SameLine(badge_x)
+            if imgui.Badge then
+                local variant = save_status_msg:match("^Error") and "danger" or "success"
+                imgui.Badge(save_status_msg, variant)
+            else
+                imgui.TextColored(0.2, 0.8, 0.2, 1.0, save_status_msg)
+            end
+            if #save_status_path > 0 then
+                show_tooltip("**File Path:**\n`" .. save_status_path .. "`")
+            end
         end
-        if #save_status_path > 0 then
-            show_tooltip("**File Path:**\n`" .. save_status_path .. "`")
-        end
     end
 
-    imgui.Separator()
-
-    -- Mode Selectors (Left)
-    if render_mode_button("  Write  ", view_mode == "Write", "**Write Mode** (Editor Only)\n\nMaximum horizontal and vertical space for drafting notes.") then
-        view_mode = "Write"
+    if zoom_start > cur_top_x + 10 then
+        imgui.SameLine(zoom_start)
+    else
+        imgui.SameLine()
     end
 
-    imgui.SameLine()
-    if render_mode_button("  Split View  ", view_mode == "Split", "**Split View** (Side-by-Side)\n\nLive side-by-side editing on the left with instant Markdown preview on the right.") then
-        view_mode = "Split"
-    end
-
-    imgui.SameLine()
-    if render_mode_button("  Preview  ", view_mode == "Preview", "**Preview Mode** (Reader Only)\n\nClean reading view displaying formatted Markdown typography, badges, and checklists.") then
-        view_mode = "Preview"
-    end
-
-    -- Content Zoom Controls in Header Chrome (Unscaled baseline 1.0x)
-    imgui.SameLine(0, 14)
-    imgui.TextUnformatted("|")
-    imgui.SameLine(0, 14)
     imgui.TextUnformatted("Zoom:")
-    imgui.SameLine(0, 8)
+    imgui.SameLine(0, 6)
 
     -- Zoom Out Stepper [-] (Steps by 1 exact font pixel: 16px -> 15px -> 14px...)
     push_button_repeat(true)
@@ -908,7 +896,7 @@ local function md_editor_render_content()
     imgui.SameLine(0, 4)
 
     -- Zoom Slider (with mouse-wheel adjust snapping to exact font pixels)
-    if imgui.SetNextItemWidth then imgui.SetNextItemWidth(90) end
+    if imgui.SetNextItemWidth then imgui.SetNextItemWidth(75) end
     local slider_changed, new_zoom = imgui.SliderInt("##zoom_slider", zoom_pct, 50, 200, "%d%%")
     local is_scrolling_zoom = false
     if slider_changed and new_zoom then
@@ -1009,8 +997,25 @@ local function md_editor_render_content()
         show_tooltip("**Zoom Baseline (100%)**\n\nCanvas font scale is at 100% baseline.")
     end
 
+    imgui.Separator()
+
+    -- Mode Selectors (Left)
+    if render_mode_button("  Write  ", view_mode == "Write", "**Write Mode** (Editor Only)\n\nMaximum horizontal and vertical space for drafting notes.") then
+        view_mode = "Write"
+    end
+
+    imgui.SameLine()
+    if render_mode_button("  Split View  ", view_mode == "Split", "**Split View** (Side-by-Side)\n\nLive side-by-side editing on the left with instant Markdown preview on the right.") then
+        view_mode = "Split"
+    end
+
+    imgui.SameLine()
+    if render_mode_button("  Preview  ", view_mode == "Preview", "**Preview Mode** (Reader Only)\n\nClean reading view displaying formatted Markdown typography, badges, and checklists.") then
+        view_mode = "Preview"
+    end
+
     -- Persistence & Note File Selector (Right)
-    local right_start = avail_w - 410
+    local right_start = avail_w - 475
     local cur_x = (imgui.GetCursorPosX and imgui.GetCursorPosX()) or 0
     if right_start > cur_x + 10 then
         imgui.SameLine(right_start)
@@ -1021,7 +1026,7 @@ local function md_editor_render_content()
     imgui.TextUnformatted("Note:")
     imgui.SameLine(0, 4)
     if imgui.SetNextItemWidth then
-        imgui.SetNextItemWidth(140)
+        imgui.SetNextItemWidth(200)
     end
     local notes_dir = get_notes_dir()
     if imgui.FilePickerCombo then
@@ -1348,8 +1353,26 @@ function md_editor_on_build(wnd, x, y)
     end
 end
 
+local saved_wnd_x = nil
+local saved_wnd_y = nil
+local saved_wnd_w = nil
+local saved_wnd_h = nil
+
+local function capture_window_geometry()
+    if editor_wnd and float_wnd_get_geometry then
+        local l, t, r, b = float_wnd_get_geometry(editor_wnd)
+        if r and b and r > l and t > b then
+            saved_wnd_w = r - l
+            saved_wnd_h = t - b
+            saved_wnd_x = l
+            saved_wnd_y = b
+        end
+    end
+end
+
 function md_editor_on_close(wnd)
-    -- Do not overwrite notes on window close; saves must be explicit via 'Save Notes'
+    -- Capture window bounds before destruction
+    capture_window_geometry()
     editor_wnd = nil
 end
 
@@ -1364,15 +1387,15 @@ function show_cockpit_notes()
         screen_w, screen_h = XPLMGetScreenSize()
     end
 
-    local wnd_w = 980
-    local wnd_h = 470
-    local wnd_x = math.max(30, math.floor((screen_w - wnd_w) * 0.10) + 200)
-    local wnd_y = math.max(40, math.floor((screen_h - wnd_h) * 0.15))
+    local wnd_w = saved_wnd_w or 980
+    local wnd_h = saved_wnd_h or 470
+    local wnd_x = saved_wnd_x or math.max(30, math.floor((screen_w - wnd_w) * 0.10) + 200)
+    local wnd_y = saved_wnd_y or math.max(40, math.floor((screen_h - wnd_h) * 0.15))
 
     -- Create ImGui floating window (4th arg MUST be true for withImgui)
     editor_wnd = float_wnd_create(wnd_w, wnd_h, 1, true)
     float_wnd_set_position(editor_wnd, wnd_x, wnd_y)
-    float_wnd_set_title(editor_wnd, "Cockpit Notes v1.0.1")
+    float_wnd_set_title(editor_wnd, "Cockpit Notes v1.0.2 [Beta]")
     float_wnd_set_imgui_builder(editor_wnd, "md_editor_on_build")
     float_wnd_set_onclose(editor_wnd, "md_editor_on_close")
 
@@ -1382,14 +1405,15 @@ function show_cockpit_notes()
         float_wnd_set_scrolling(editor_wnd, false)
     end
 
-    -- Prevent resizing the window smaller than the minimum toolbar and pane bounds (540x260)
+    -- Prevent resizing the window smaller than the minimum toolbar and pane bounds (720x280)
     if float_wnd_set_resizing_limits then
-        float_wnd_set_resizing_limits(editor_wnd, 540, 260, 10000, 10000)
+        float_wnd_set_resizing_limits(editor_wnd, 720, 280, 10000, 10000)
     end
 end
 
 function hide_cockpit_notes()
     if editor_wnd then
+        capture_window_geometry()
         float_wnd_destroy(editor_wnd)
         editor_wnd = nil
     end

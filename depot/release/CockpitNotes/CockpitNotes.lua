@@ -80,17 +80,132 @@ local dec_repeat_count = 0   -- Counter to throttle repeat speed on [-] (1/4 rat
 local inc_repeat_count = 0   -- Counter to throttle repeat speed on [+] (1/4 rate)
 
 -- ----------------------------------------------------------------------------
--- File Persistence & In-Cockpit File Dialogs (Turnkey ImgWindow File Suite)
+-- File Persistence (Save & Load in Scripts/CockpitNotes/notes/)
 -- ----------------------------------------------------------------------------
 local is_windows = (SYSTEM == "IBM") or (package.config:sub(1,1) == "\\")
 
-local function ensure_directory(dir)
+-- Windows-specific pure Win32 kernel32 FFI file enumeration (Zero Shell / No cmd.exe / No Deadlock)
+local ffi_ok, ffi = pcall(require, "ffi")
+if is_windows and ffi_ok and ffi then
+    pcall(ffi.cdef, [[
+        typedef struct _WIN32_FIND_DATAA {
+            uint32_t dwFileAttributes;
+            uint32_t ftCreationTime_dwLowDateTime;
+            uint32_t ftCreationTime_dwHighDateTime;
+            uint32_t ftLastAccessTime_dwLowDateTime;
+            uint32_t ftLastAccessTime_dwHighDateTime;
+            uint32_t ftLastWriteTime_dwLowDateTime;
+            uint32_t ftLastWriteTime_dwHighDateTime;
+            uint32_t nFileSizeHigh;
+            uint32_t nFileSizeLow;
+            uint32_t dwReserved0;
+            uint32_t dwReserved1;
+            char     cFileName[260];
+            char     cAlternateFileName[14];
+        } WIN32_FIND_DATAA;
+
+        void* FindFirstFileA(const char* lpFileName, WIN32_FIND_DATAA* lpFindFileData);
+        int   FindNextFileA(void* hFindFile, WIN32_FIND_DATAA* lpFindFileData);
+        int   FindClose(void* hFindFile);
+        int   CreateDirectoryA(const char* lpPathName, void* lpSecurityAttributes);
+    ]])
+end
+
+local function get_kernel32()
+    if not (ffi_ok and ffi) then return nil end
+    local ok, k32 = pcall(function() return ffi.load("kernel32") end)
+    if ok and k32 then return k32 end
+    return ffi.C
+end
+
+local function scan_notes_windows(dir)
+    local files = {}
+    if not (ffi_ok and ffi) then return files end
+    pcall(function()
+        local k32 = get_kernel32()
+        if not k32 then return end
+        
+        -- Ensure directory exists via kernel32 CreateDirectoryA (zero shell)
+        k32.CreateDirectoryA(dir, nil)
+
+        local find_data = ffi.new("WIN32_FIND_DATAA")
+        local pattern = dir .. "\\*.md"
+        local handle = k32.FindFirstFileA(pattern, find_data)
+        if handle ~= nil then
+            local int_h = tonumber(ffi.cast("intptr_t", handle))
+            if int_h and int_h ~= -1 and int_h ~= 0 then
+                while true do
+                    local fname = ffi.string(find_data.cFileName)
+                    if fname and #fname > 0 and fname:match("%.md$") and not fname:match("^%.") then
+                        table.insert(files, fname)
+                    end
+                    if k32.FindNextFileA(handle, find_data) == 0 then
+                        break
+                    end
+                end
+                k32.FindClose(handle)
+            end
+        end
+    end)
+    return files
+end
+
+local function scan_notes_posix(dir)
+    local files = {}
+    local files_map = {}
     local ok, lfs = pcall(require, "lfs_ffi")
-    if not (ok and lfs) then
-        ok, lfs = pcall(require, "lfs")
+    if ok and lfs then
+        if lfs.mkdir then
+            pcall(lfs.mkdir, dir)
+        end
+        if lfs.dir then
+            pcall(function()
+                for entry in lfs.dir(dir) do
+                    if entry and entry:match("%.md$") and not entry:match("^%.") then
+                        if not files_map[entry] then
+                            files_map[entry] = true
+                            table.insert(files, entry)
+                        end
+                    end
+                end
+            end)
+        end
     end
-    if ok and lfs and lfs.mkdir then
-        pcall(lfs.mkdir, dir)
+
+    -- Fallback to ls on POSIX (macOS & Linux) where popen is standard and safe
+    if #files == 0 and io.popen then
+        pcall(function()
+            local p = io.popen('ls -1 "' .. dir .. '" 2>/dev/null')
+            if p then
+                for line in p:lines() do
+                    line = line:gsub("%s+$", "")
+                    if line:match("%.md$") and not line:match("^%.") then
+                        if not files_map[line] then
+                            files_map[line] = true
+                            table.insert(files, line)
+                        end
+                    end
+                end
+                p:close()
+            end
+        end)
+    end
+    return files
+end
+
+local function ensure_directory(dir)
+    if is_windows then
+        if ffi_ok and ffi then
+            pcall(function()
+                local k32 = get_kernel32()
+                if k32 then k32.CreateDirectoryA(dir, nil) end
+            end)
+        end
+    else
+        local ok, lfs = pcall(require, "lfs_ffi")
+        if ok and lfs and lfs.mkdir then
+            pcall(lfs.mkdir, dir)
+        end
     end
 end
 
@@ -125,23 +240,56 @@ local function get_legacy_save_path()
     return base_dir .. sep .. "cockpit_notes.md"
 end
 
-local current_filename = "cockpit_notes.md"
-local current_note_file = current_filename -- Synced alias for backwards compatibility
+local current_note_file = "cockpit_notes.md"
 local show_new_file_modal = false
 local new_file_name_input = ""
 local focus_new_note_input = false
 
--- Modal file management dialog states (safe for VR, non-blocking, within viewport)
-local show_open_dialog = false
-local show_save_dialog = false
-
 local function get_note_path(filename)
-    filename = filename or current_filename
-    if not filename:lower():match("%.[a-z0-9]+$") then
-        filename = filename .. ".md"
-    end
+    filename = filename or current_note_file
+    filename = filename:gsub("%.[mM][dD]$", "") .. ".md"
     local sep = is_windows and "\\" or "/"
     return get_notes_dir() .. sep .. filename
+end
+
+local cached_note_files = {}
+local last_files_scan_time = 0
+
+local function list_note_files(force)
+    local now = os.clock()
+    if not force and #cached_note_files > 0 and (now - last_files_scan_time < 1.5) then
+        return cached_note_files
+    end
+    last_files_scan_time = now
+
+    local dir = get_notes_dir()
+    ensure_directory(dir)
+    local raw_files = is_windows and scan_notes_windows(dir) or scan_notes_posix(dir)
+
+    local files_map = {}
+    local files = {}
+    if raw_files then
+        for _, f in ipairs(raw_files) do
+            if not files_map[f] then
+                files_map[f] = true
+                table.insert(files, f)
+            end
+        end
+    end
+
+    -- Always ensure cockpit_notes.md and current_note_file are included
+    if not files_map["cockpit_notes.md"] then
+        table.insert(files, "cockpit_notes.md")
+        files_map["cockpit_notes.md"] = true
+    end
+    if current_note_file and not files_map[current_note_file] then
+        table.insert(files, current_note_file)
+        files_map[current_note_file] = true
+    end
+
+    table.sort(files)
+    cached_note_files = files
+    return cached_note_files
 end
 
 -- Default scratchpad template loaded if no saved notes exist on disk
@@ -151,7 +299,6 @@ Welcome to your in-cockpit **FlyWithLua Markdown Editor**!
 * **Live Formatting:** Headers, **bold**, *italic*, <u>underline</u>, and ~~strikethrough~~.
 * **Avionics Badges:** <badge green>ENG 1 NORMAL</badge> <badge yellow>FUEL PUMP AUTO</badge> <badge red>FIRE TEST</badge>
 * **Keycaps & Shortcuts:** Press <kbd>Alt+F4</kbd> or <kbd>Ctrl+Shift+P</kbd>
-* **Dual-Bracket Hyperlinks:** [FlyWithLua Documentation](https://github.com/sparker256/FlyWithLua) or {Cockpit Notes}(https://github.com/slgoldberg/FlyWithLua-CockpitNotes)
 * **Checklists:**
   - `[x]` Pre-flight briefing complete
   - `[x]` Altimeter set to standard: `29.92 inHg`
@@ -167,8 +314,8 @@ local alt = get("sim/flightmodel/position/elevation")
 ]]
 
 -- Rich Markdown content for the "About" dialog
-local about_markdown_text = [[# FlyWithLua Cockpit Notes
-<badge green>v1.0.1 Standalone</badge> <pill blue>Phase 3 Suite</pill>
+local about_markdown_text = [[# Cockpit Markdown Notes & Scratchpad
+<badge green>v1.0</badge> <pill blue>FlyWithLua Next-Gen</pill>
 
 An interactive in-cockpit Markdown scratchpad and flight notes system for X-Plane 12 flight operations.
 
@@ -176,12 +323,10 @@ An interactive in-cockpit Markdown scratchpad and flight notes system for X-Plan
 
 ### Key Capabilities
 * **Live Markdown Typography:** Headers (`#`, `##`), **bold**, *italic*, <u>underline</u>, ~~strikethrough~~, bulleted lists, and formatted code blocks with syntax styling.
-* **Dual-Bracket Hyperlinks:** Standard CommonMark `[Label](url)` and `![Alt](img)` links supported side-by-side with legacy `{...}` brackets.
-* **In-Cockpit File Management:** Turnkey C++11 native directory combo (`imgui.FilePickerCombo`) and in-viewport modal `[Open...]` and `[Save As...]` dialogs.
 * **Avionics Badges & Annunciators:** Instrument callouts and status indicators using `<badge green|yellow|red>` and `<pill blue|green|default>`.
 * **Cockpit Checklists & Tasks:** Prepend `- [ ]` or click `[ ] Task` to format verify-and-execute flight crew checklists with inline monospace boxes.
 * **Tactile Canvas Zoom:** Dynamic font scaling from **50% to 200%** with 1-point quantum steppers, mouse-wheel adjust, and 1-click A/B toggle back to 100% baseline.
-* **Dedicated Multi-Note Storage:** Automatic file persistence in `FlyWithLua/Scripts/CockpitNotes/notes/` with active note file selection and instant new note creation.
+* **Dedicated Multi-Note Storage:** Automatic file persistence in `FlyWithLua/Scripts/CockpitNotes/notes/` with active note file selection, manual Finder file discovery, and instant new note creation.
 * **Three Workflow Modes:**
   - **Write:** High-efficiency source editor.
   - **Split:** Live side-by-side editing with instant soft-wrapped Markdown preview.
@@ -194,7 +339,6 @@ An interactive in-cockpit Markdown scratchpad and flight notes system for X-Plan
 * **Dear ImGui:** Bloat-free immediate-mode GUI by Omar Cornut.
 * **imgui_markdown:** Markdown rendering extension by Juliette Foucaut, enhanced with Roger2 and ImgWindow extensions.
 * **ImgWindow:** Modern Floating Window integration by Steven L. Goldberg.
-* **Repository:** [FlyWithLua-CockpitNotes on GitHub](https://github.com/slgoldberg/FlyWithLua-CockpitNotes)
 ]]
 
 -- Load saved notes on startup if available, otherwise fall back to template
@@ -205,7 +349,6 @@ local function load_initial_document()
         local content = f:read("*a")
         f:close()
         if content and #content > 0 then
-            current_filename = "cockpit_notes.md"
             current_note_file = "cockpit_notes.md"
             return content
         end
@@ -217,14 +360,13 @@ local function load_initial_document()
         local content = f:read("*a")
         f:close()
         if content and #content > 0 then
-            -- Auto-migrate to notes directory
+            -- Auto-migrate to MarkdownEditor directory
             ensure_directory(get_notes_dir())
             local fw = io.open(path, "w")
             if fw then
                 fw:write(content)
                 fw:close()
             end
-            current_filename = "cockpit_notes.md"
             current_note_file = "cockpit_notes.md"
             return content
         end
@@ -277,7 +419,6 @@ local templates = {
 
 * **Aircraft:** `B737-800 / A320` | **Route:** `KORD -> KMSP`
 * **Cruise:** `FL340 / M0.78` | **Cost Index:** `28`
-* **Dispatch Planning:** [SimBrief Flight Plan](https://www.simbrief.com)
 
 ---
 
@@ -322,7 +463,6 @@ local templates = {
 * **Primary Destination:** `KMSP (Minneapolis-St. Paul)`
 * **Designated Alternate:** `KSBN (South Bend Regional)`
 * **Diversion Reason:** `Below Minima / Weather / System Advisory`
-* **Airport Information:** [AirNav KSBN Overview](https://www.airnav.com/airport/KSBN)
 
 ---
 
@@ -371,7 +511,6 @@ local templates = {
 
 * **Flight:** `KORD -> KMSP` | **Briefing Time:** `1850Z`
 * **Flight Category:** ORD <badge green>VFR</badge> | MSP <badge yellow>MVFR</badge>
-* **Weather Source:** [NOAA Aviation Weather Center](https://aviationweather.gov)
 
 ---
 
@@ -571,86 +710,9 @@ local function wrap_or_insert(prefix, suffix, default_text, is_line_prefix)
     cached_sel_end   = -1
 end
 
-local function load_note_from_full_path(chosen_path)
-    if not chosen_path or #chosen_path == 0 then return end
-    local f, err = io.open(chosen_path, "r")
-    if f then
-        editor_text = f:read("*a")
-        f:close()
-        local fname = chosen_path:match("([^/\\]+)$") or chosen_path
-        current_filename = fname
-        current_note_file = fname
-        editor_epoch = editor_epoch + 1
-        just_formatted = true
-        save_status_msg = "Loaded: " .. fname
-        save_status_path = chosen_path
-        save_status_time = os.time()
-    else
-        save_status_msg = "File not found"
-        save_status_path = tostring(err)
-        save_status_time = os.time()
-    end
-end
-
-local function save_note_to_full_path(save_path)
-    if not save_path or #save_path == 0 then return end
-    if not save_path:lower():match("%.[a-z0-9]+$") then
-        save_path = save_path .. ".md"
-    end
-    local f, err = io.open(save_path, "w")
-    if f then
-        f:write(editor_text)
-        f:close()
-        local fname = save_path:match("([^/\\]+)$") or save_path
-        current_filename = fname
-        current_note_file = fname
-        save_status_msg = "Saved: " .. fname
-        save_status_path = save_path
-        save_status_time = os.time()
-    else
-        save_status_msg = "Error Saving Notes"
-        save_status_path = tostring(err)
-        save_status_time = os.time()
-    end
-end
-
-local function load_note(filename)
-    filename = filename or current_filename
-    if filename:find("[/\\]") then
-        return load_note_from_full_path(filename)
-    end
-    local path = get_note_path(filename)
-    local f, err = io.open(path, "r")
-    if not f and (filename == "cockpit_notes.md" or filename == "cockpit_notes") then
-        local leg_path = get_legacy_save_path()
-        f = io.open(leg_path, "r")
-    end
-    if f then
-        editor_text = f:read("*a")
-        f:close()
-        current_filename = filename
-        current_note_file = filename
-        editor_epoch = editor_epoch + 1
-        just_formatted = true
-        save_status_msg = "Loaded: " .. filename
-        save_status_path = path
-        save_status_time = os.time()
-    else
-        save_status_msg = "File not found: " .. filename
-        save_status_path = path
-        save_status_time = os.time()
-    end
-end
-
-local function save_note(filename)
-    filename = filename or current_filename
-    if filename:find("[/\\]") then
-        return save_note_to_full_path(filename)
-    end
-    if not filename:lower():match("%.[a-z0-9]+$") then
-        filename = filename .. ".md"
-    end
-    current_filename = filename
+local function save_document(filename)
+    filename = filename or current_note_file
+    filename = filename:gsub("%.[mM][dD]$", "") .. ".md"
     current_note_file = filename
     local dir = get_notes_dir()
     ensure_directory(dir)
@@ -662,6 +724,7 @@ local function save_note(filename)
         save_status_msg = "Saved: " .. filename
         save_status_path = path
         save_status_time = os.time()
+        list_note_files(true)
     else
         save_status_msg = "Error Saving Notes"
         save_status_path = tostring(err)
@@ -669,9 +732,32 @@ local function save_note(filename)
     end
 end
 
--- Backward compatibility aliases
-local load_document = load_note
-local save_document = save_note
+local function load_document(filename)
+    filename = filename or current_note_file
+    filename = filename:gsub("%.[mM][dD]$", "") .. ".md"
+    local path = get_note_path(filename)
+    local f, err = io.open(path, "r")
+    if not f and filename == "cockpit_notes.md" then
+        -- Check legacy path
+        local leg_path = get_legacy_save_path()
+        f = io.open(leg_path, "r")
+    end
+    if f then
+        editor_text = f:read("*a")
+        f:close()
+        current_note_file = filename
+        editor_epoch = editor_epoch + 1
+        just_formatted = true
+        save_status_msg = "Loaded: " .. filename
+        save_status_path = path
+        save_status_time = os.time()
+        list_note_files(true)
+    else
+        save_status_msg = "File not found: " .. filename
+        save_status_path = path
+        save_status_time = os.time()
+    end
+end
 
 -- Helper to dismiss and reset the stationary TimedTooltip low-watermark timer
 local function clear_active_tooltip()
@@ -1010,7 +1096,7 @@ local function md_editor_render_content()
     end
 
     -- Persistence & Note File Selector (Right)
-    local right_start = avail_w - 410
+    local right_start = avail_w - 280
     local cur_x = (imgui.GetCursorPosX and imgui.GetCursorPosX()) or 0
     if right_start > cur_x + 10 then
         imgui.SameLine(right_start)
@@ -1023,34 +1109,41 @@ local function md_editor_render_content()
     if imgui.SetNextItemWidth then
         imgui.SetNextItemWidth(140)
     end
-    local notes_dir = get_notes_dir()
-    if imgui.FilePickerCombo then
-        local changed, chosen_file = imgui.FilePickerCombo("##notes_select", current_filename, notes_dir, ".md;.txt")
-        if changed then
-            current_filename = chosen_file
-            current_note_file = chosen_file
-            load_note(current_filename)
+    if imgui.BeginCombo("##active_note_file", current_note_file, 0) then
+        local ok, err = pcall(function()
+            local note_files = list_note_files()
+            for _, nfile in ipairs(note_files) do
+                local is_selected = (nfile == current_note_file)
+                if imgui.Selectable(nfile, is_selected) then
+                    if nfile ~= current_note_file then
+                        load_document(nfile)
+                    end
+                end
+                if is_selected and imgui.SetItemDefaultFocus then
+                    imgui.SetItemDefaultFocus()
+                end
+            end
+            imgui.Separator()
+            if imgui.Selectable("+ New Note...", false) then
+                show_new_file_modal = true
+                new_file_name_input = ""
+                focus_new_note_input = true
+            end
+        end)
+        imgui.EndCombo()
+        if not ok then
+            print("[FlyWithLua CockpitNotes] Error in Note Combo: " .. tostring(err))
         end
     end
-    show_tooltip("**Active Note File**\n\n* Select any `.md` or `.txt` file in `notes/`\n* Microsecond C++ native directory scanning")
+    show_tooltip("**Active Note File**\n\n* Select any `.md` file in `Scripts/CockpitNotes/notes/`\n* Files dropped into folder in Finder/Explorer appear automatically\n* Click `+ New Note...` to create a new file")
 
     imgui.SameLine(0, 4)
-    if toolbar_button("Save", string.format("**Save Note**\n\nPersist buffer to `%s` on disk.", current_filename)) then
-        save_note(current_filename)
+    if toolbar_button("Save", string.format("**Save Note**\n\nPersist buffer to `Scripts/CockpitNotes/notes/%s` on disk.", current_note_file)) then
+        save_document(current_note_file)
     end
 
     imgui.SameLine(0, 4)
-    if toolbar_button("Open...", "**Open Note Dialog**\n\nBrowse and load any `.md` or `.txt` file using the in-cockpit modal dialog.") then
-        show_open_dialog = true
-    end
-
-    imgui.SameLine(0, 4)
-    if toolbar_button("Save As...", "**Save Note As Dialog**\n\nSave current note under a new filename.") then
-        show_save_dialog = true
-    end
-
-    imgui.SameLine(0, 4)
-    if toolbar_button("+ New", "**Create New Note**\n\nCreate a new named Markdown file in `notes/`.") then
+    if toolbar_button("+ New", "**Create New Note**\n\nCreate a new named Markdown file in `Scripts/CockpitNotes/notes/`.") then
         show_new_file_modal = true
         new_file_name_input = ""
         focus_new_note_input = true
@@ -1087,12 +1180,11 @@ local function md_editor_render_content()
             local clean_name = raw_name:gsub("[^%w_%-]", "_")
             if #clean_name > 0 then
                 local file_name = clean_name .. ".md"
-                current_filename = file_name
                 current_note_file = file_name
                 editor_text = "# " .. raw_name .. "\n\n"
                 editor_epoch = editor_epoch + 1
                 just_formatted = true
-                save_note(file_name)
+                save_document(file_name)
                 save_status_msg = "Created note: " .. file_name
                 show_new_file_modal = false
             end
@@ -1132,8 +1224,6 @@ local function md_editor_render_content()
         if toolbar_button("<kbd>", "**Keyboard Keycap**\n\nWrap selection in physical keycap `<kbd>Key</kbd>`.") then wrap_or_insert("<kbd>", "</kbd>", "Key") end
         imgui.SameLine()
         if toolbar_button("Code", "**Lua Code Block**\n\nWrap selection in fenced ```lua block with live preview.") then wrap_or_insert("```lua\n", "\n```", "-- code block\n") end
-        imgui.SameLine()
-        if toolbar_button("Link", "**Markdown Link**\n\nWrap selection in CommonMark `[Label](url)` hyperlink.") then wrap_or_insert("[", "](https://)", "Link text") end
 
         -- Templates Dropdown
         imgui.SameLine()
@@ -1294,26 +1384,6 @@ local function md_editor_render_content()
     end
 
     -- ------------------------------------------------------------------------
-    -- IN-COCKPIT FILE DIALOGS (Modal, VR-safe, non-blocking)
-    -- ------------------------------------------------------------------------
-    local notes_dir = get_notes_dir()
-    if show_open_dialog and imgui.OpenFileDialog then
-        local confirmed, chosen_path, still_open = imgui.OpenFileDialog("Select Note File", show_open_dialog, notes_dir, ".md;.txt")
-        if confirmed then
-            load_note_from_full_path(chosen_path)
-        end
-        show_open_dialog = still_open
-    end
-
-    if show_save_dialog and imgui.SaveFileDialog then
-        local confirmed, save_path, still_open = imgui.SaveFileDialog("Save Note As", show_save_dialog, notes_dir, current_filename, ".md")
-        if confirmed then
-            save_note_to_full_path(save_path)
-        end
-        show_save_dialog = still_open
-    end
-
-    -- ------------------------------------------------------------------------
     -- ABOUT MODAL POPUP
     -- ------------------------------------------------------------------------
     if imgui.SetNextWindowSize then
@@ -1350,68 +1420,35 @@ end
 
 function md_editor_on_close(wnd)
     -- Do not overwrite notes on window close; saves must be explicit via 'Save Notes'
-    editor_wnd = nil
 end
 
 -- ----------------------------------------------------------------------------
--- Window Lifecycle (Lazy Startup & In-Cockpit Toggle)
+-- Window Creation & Initialization
 -- ----------------------------------------------------------------------------
-function show_cockpit_notes()
-    if editor_wnd then return end
-
-    local screen_w, screen_h = 1920, 1080
-    if XPLMGetScreenSize then
-        screen_w, screen_h = XPLMGetScreenSize()
-    end
-
-    local wnd_w = 980
-    local wnd_h = 470
-    local wnd_x = math.max(30, math.floor((screen_w - wnd_w) * 0.10) + 200)
-    local wnd_y = math.max(40, math.floor((screen_h - wnd_h) * 0.15))
-
-    -- Create ImGui floating window (4th arg MUST be true for withImgui)
-    editor_wnd = float_wnd_create(wnd_w, wnd_h, 1, true)
-    float_wnd_set_position(editor_wnd, wnd_x, wnd_y)
-    float_wnd_set_title(editor_wnd, "Cockpit Notes v1.0.1")
-    float_wnd_set_imgui_builder(editor_wnd, "md_editor_on_build")
-    float_wnd_set_onclose(editor_wnd, "md_editor_on_close")
-
-    -- Explicitly disable outer window scrollbars and mouse-wheel scrolling so the
-    -- window never overflows horizontally. Inner child panes handle vertical scrolling.
-    if float_wnd_set_scrolling then
-        float_wnd_set_scrolling(editor_wnd, false)
-    end
-
-    -- Prevent resizing the window smaller than the minimum toolbar and pane bounds (540x260)
-    if float_wnd_set_resizing_limits then
-        float_wnd_set_resizing_limits(editor_wnd, 540, 260, 10000, 10000)
-    end
+local screen_w, screen_h = 1920, 1080
+if XPLMGetScreenSize then
+    screen_w, screen_h = XPLMGetScreenSize()
 end
 
-function hide_cockpit_notes()
-    if editor_wnd then
-        float_wnd_destroy(editor_wnd)
-        editor_wnd = nil
-    end
+local wnd_w = 980
+local wnd_h = 470
+local wnd_x = math.max(30, math.floor((screen_w - wnd_w) * 0.10) + 200)
+local wnd_y = math.max(40, math.floor((screen_h - wnd_h) * 0.15))
+
+-- Create ImGui floating window (4th arg MUST be true for withImgui)
+editor_wnd = float_wnd_create(wnd_w, wnd_h, 1, true)
+float_wnd_set_position(editor_wnd, wnd_x, wnd_y)
+float_wnd_set_title(editor_wnd, "Cockpit Markdown Notes & Scratchpad")
+float_wnd_set_imgui_builder(editor_wnd, "md_editor_on_build")
+float_wnd_set_onclose(editor_wnd, "md_editor_on_close")
+
+-- Explicitly disable outer window scrollbars and mouse-wheel scrolling so the
+-- window never overflows horizontally. Inner child panes handle vertical scrolling.
+if float_wnd_set_scrolling then
+    float_wnd_set_scrolling(editor_wnd, false)
 end
 
-function toggle_cockpit_notes()
-    if editor_wnd then
-        hide_cockpit_notes()
-    else
-        show_cockpit_notes()
-    end
+-- Prevent resizing the window smaller than the minimum toolbar and pane bounds (540x260)
+if float_wnd_set_resizing_limits then
+    float_wnd_set_resizing_limits(editor_wnd, 540, 260, 10000, 10000)
 end
-
--- ----------------------------------------------------------------------------
--- Command & Macro Menu Registration
--- ----------------------------------------------------------------------------
-create_command(
-    "FlyWithLua/CockpitNotes/toggle",
-    "Toggle Cockpit Notes & Scratchpad window",
-    "toggle_cockpit_notes()",
-    "",
-    ""
-)
-
-add_macro("Cockpit Notes: Toggle", "command_once('FlyWithLua/CockpitNotes/toggle')")

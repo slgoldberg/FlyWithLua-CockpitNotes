@@ -1,5 +1,5 @@
-CockpitNotes.lua|57976
-changelog.txt|1275
+CockpitNotes.lua|58680
+changelog.txt|2014
 notes/cockpit_notes.md|1058
 notes/diversion_briefing.md|2342
 notes/fuel_and_weight.md|1928
