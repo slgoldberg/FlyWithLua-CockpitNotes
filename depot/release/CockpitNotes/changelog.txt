@@ -2,6 +2,14 @@
 FlyWithLua CockpitNotes - Changelog
 ================================================================================
 
+Version 1.0.1
+--------------------------------------------------------------------------------
+- Silent non-intrusive startup: window stays hidden until summoned.
+- Registered X-Plane command "FlyWithLua/CockpitNotes/toggle" for key/joystick binding.
+- Added FlyWithLua macro "Cockpit Notes: Toggle".
+- Dynamic title bar showing version and active note filename.
+- SkunkCrafts Updater Changelog and Readme tabs integration.
+
 Version 1.0.0 (Initial Modular Standalone Release)
 --------------------------------------------------------------------------------
 - Phase 3 C++11 native file selection suite integration.
