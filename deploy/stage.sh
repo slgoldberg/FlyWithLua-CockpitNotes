@@ -50,6 +50,8 @@ stage_channel() {
     # 1. Copy runtime files
     cp -a "$REPO_ROOT/CockpitNotes.lua" "$STAGING_DIR/"
     cp -a "$REPO_ROOT/notes/"* "$STAGING_DIR/notes/"
+    cp -a "$REPO_ROOT/changelog.txt" "$STAGING_DIR/"
+    cp -a "$REPO_ROOT/readme.txt" "$STAGING_DIR/"
 
     # 2. Copy SkunkCrafts server/depot generator configuration
     cp -a "$CHANNEL_CFG" "$STAGING_DIR/skunkcrafts_updater_config.txt"
@@ -63,10 +65,6 @@ stage_channel() {
         local DEPOT_DIR="$REPO_ROOT/build/depot/depot/$CHANNEL/CockpitNotes"
         echo "==> Generating depot manifests with xpdepot.py for $CHANNEL..."
         python3 "$SCRIPT_DIR/xpdepot.py" --stage "$STAGING_DIR" --depot "$DEPOT_DIR"
-
-        # Copy depot-level metadata for SkunkCrafts Updater tabs
-        cp -a "$REPO_ROOT/changelog.txt" "$DEPOT_DIR/"
-        cp -a "$REPO_ROOT/readme.txt" "$DEPOT_DIR/"
     fi
 }
 
@@ -90,10 +88,14 @@ if [[ "$SYNC_FWL" == true ]]; then
         cp -a "$RELEASE_DEPOT/CockpitNotes.lua" "$FWL_DEST/"
         cp -a "$RELEASE_DEPOT/notes/"* "$FWL_DEST/notes/"
         cp -a "$RELEASE_DEPOT/skunkcrafts_updater.cfg" "$FWL_DEST/"
+        cp -a "$RELEASE_DEPOT/changelog.txt" "$FWL_DEST/"
+        cp -a "$RELEASE_DEPOT/readme.txt" "$FWL_DEST/"
     else
         cp -a "$REPO_ROOT/CockpitNotes.lua" "$FWL_DEST/"
         cp -a "$REPO_ROOT/notes/"* "$FWL_DEST/notes/"
         cp -a "$REPO_ROOT/deploy/channels/release_config.txt" "$FWL_DEST/skunkcrafts_updater.cfg"
+        cp -a "$REPO_ROOT/changelog.txt" "$FWL_DEST/"
+        cp -a "$REPO_ROOT/readme.txt" "$FWL_DEST/"
     fi
     echo "==> FlyWithLua distribution payload synchronized successfully!"
 fi
@@ -111,10 +113,14 @@ if [[ "$PACKAGE_ZIP" == true ]]; then
         cp -a "$RELEASE_DEPOT/CockpitNotes.lua" "$DIST_PAYLOAD/"
         cp -a "$RELEASE_DEPOT/notes/"* "$DIST_PAYLOAD/notes/"
         cp -a "$RELEASE_DEPOT/skunkcrafts_updater.cfg" "$DIST_PAYLOAD/"
+        cp -a "$RELEASE_DEPOT/changelog.txt" "$DIST_PAYLOAD/"
+        cp -a "$RELEASE_DEPOT/readme.txt" "$DIST_PAYLOAD/"
     else
         cp -a "$REPO_ROOT/CockpitNotes.lua" "$DIST_PAYLOAD/"
         cp -a "$REPO_ROOT/notes/"* "$DIST_PAYLOAD/notes/"
         cp -a "$REPO_ROOT/deploy/channels/release_config.txt" "$DIST_PAYLOAD/skunkcrafts_updater.cfg"
+        cp -a "$REPO_ROOT/changelog.txt" "$DIST_PAYLOAD/"
+        cp -a "$REPO_ROOT/readme.txt" "$DIST_PAYLOAD/"
     fi
 
     cd "$DIST_ROOT"
