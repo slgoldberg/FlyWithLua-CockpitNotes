@@ -25,10 +25,14 @@
   * **Diversion Briefing:** Alternate airport specs, weather minima, fuel reserves, and ATC divert checklist.
   * **METAR & TAF Scratchpad:** Decoded weather observations, terminal forecasts, and winter ops checklist.
   * **FlyWithLua Scratchpad:** Test datarefs, avionics badges, and Lua logic.
-* **Multi-Note Storage & Finder Integration:**
-  * Switch between notes via the top-right dropdown.
-  * Click **+ New** to instantly create and name a new note.
-  * Any `.md` file dropped into `Scripts/CockpitNotes/notes/` in Finder or Windows Explorer is discovered automatically.
+* **Dual-Bracket CommonMark Markdown Links:**
+  * Standard CommonMark `[Label](url)` and `![Alt](img)` hyperlinks supported side-by-side with legacy `{...}` syntax.
+  * Clicking links automatically opens default web browser in macOS, Windows, and Linux.
+* **Native In-Cockpit File Suite (Microsecond C++11 Scanning):**
+  * **FilePickerCombo:** Fast inline toolbar dropdown scanning `notes/` directory with zero shell popen flashing or deadlocks.
+  * **In-Cockpit Open Dialog (`Open...`):** Modal VR-safe file browser with breadcrumb navigation and instant file search.
+  * **In-Cockpit Save As Dialog (`Save As...`):** Modal file saver with automatic extension enforcement.
+  * **Multi-Note Storage:** Automatic file persistence in `FlyWithLua/Scripts/CockpitNotes/notes/`. Instant `+ New` note creation.
 
 ---
 

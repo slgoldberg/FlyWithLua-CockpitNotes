@@ -2,6 +2,7 @@
 
 * **Flight:** `KORD -> KMSP` | **Briefing Time:** `1850Z`
 * **Flight Category:** ORD <badge green>VFR</badge> | MSP <badge yellow>MVFR</badge>
+* **Weather Source:** [NOAA Aviation Weather Center](https://aviationweather.gov)
 
 ---
 

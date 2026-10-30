@@ -2,6 +2,7 @@
 
 * **Aircraft:** `B737-800 / A320` | **Route:** `KORD -> KMSP`
 * **Cruise:** `FL340 / M0.78` | **Cost Index:** `28`
+* **Dispatch Planning:** [SimBrief Flight Plan](https://www.simbrief.com)
 
 ---
 
