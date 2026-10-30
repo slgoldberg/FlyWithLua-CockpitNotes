@@ -165,7 +165,7 @@ local alt = get("sim/flightmodel/position/elevation")
 
 -- Rich Markdown content for the "About" dialog
 local about_markdown_text = [[# FlyWithLua Cockpit Notes
-<badge green>v1.0.1 Standalone</badge> <pill blue>Phase 3 Suite</pill>
+<badge green>v1.0.2 Beta</badge> <pill blue>Phase 3 Suite</pill>
 
 An interactive in-cockpit Markdown scratchpad and flight notes system for X-Plane 12 flight operations.
 
@@ -1395,7 +1395,7 @@ function show_cockpit_notes()
     -- Create ImGui floating window (4th arg MUST be true for withImgui)
     editor_wnd = float_wnd_create(wnd_w, wnd_h, 1, true)
     float_wnd_set_position(editor_wnd, wnd_x, wnd_y)
-    float_wnd_set_title(editor_wnd, "Cockpit Notes v1.0.1")
+    float_wnd_set_title(editor_wnd, "Cockpit Notes v1.0.2 [Beta]")
     float_wnd_set_imgui_builder(editor_wnd, "md_editor_on_build")
     float_wnd_set_onclose(editor_wnd, "md_editor_on_close")
 

@@ -1,0 +1,12 @@
+================================================================================
+FlyWithLua CockpitNotes - Changelog
+================================================================================
+
+Version 1.0.0 (Initial Modular Standalone Release)
+--------------------------------------------------------------------------------
+- Standalone in-cockpit Markdown scratchpad and flight notes system.
+- Self-contained directory scanning compatible with all FlyWithLua versions.
+- Live Markdown text editor with formatted preview.
+- Multi-note storage in FlyWithLua/Scripts/CockpitNotes/notes/ with starter
+  flight checklists, flight plan, and scratchpad templates.
+- Multi-channel SkunkCrafts Updater integration (Main, beta, daily).

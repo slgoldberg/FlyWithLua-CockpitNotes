@@ -47,20 +47,27 @@ stage_channel() {
     rm -rf "$STAGING_DIR"
     mkdir -p "$STAGING_DIR/notes"
 
-    # 1. Copy runtime files
-    cp -a "$REPO_ROOT/CockpitNotes.lua" "$STAGING_DIR/"
-    cp -a "$REPO_ROOT/notes/"* "$STAGING_DIR/notes/"
-    cp -a "$REPO_ROOT/changelog.txt" "$STAGING_DIR/"
-    cp -a "$REPO_ROOT/readme.txt" "$STAGING_DIR/"
+    # 1. Determine payload source directory (split-channel architecture)
+    local PAYLOAD_DIR="$REPO_ROOT"
+    if [[ "$CHANNEL" == "release" && -d "$REPO_ROOT/deploy/payloads/release" ]]; then
+        PAYLOAD_DIR="$REPO_ROOT/deploy/payloads/release"
+        echo "    Using pinned release payload from: $PAYLOAD_DIR"
+    fi
 
-    # 2. Copy SkunkCrafts server/depot generator configuration
+    # 2. Copy runtime files
+    cp -a "$PAYLOAD_DIR/CockpitNotes.lua" "$STAGING_DIR/"
+    cp -a "$PAYLOAD_DIR/notes/"* "$STAGING_DIR/notes/"
+    cp -a "$PAYLOAD_DIR/changelog.txt" "$STAGING_DIR/"
+    cp -a "$PAYLOAD_DIR/readme.txt" "$STAGING_DIR/"
+
+    # 3. Copy SkunkCrafts server/depot generator configuration
     cp -a "$CHANNEL_CFG" "$STAGING_DIR/skunkcrafts_updater_config.txt"
     cp -a "$REPO_ROOT/deploy/skunkcrafts_updater_oncelist.txt" "$STAGING_DIR/"
     cp -a "$REPO_ROOT/deploy/skunkcrafts_updater_blacklist.txt" "$STAGING_DIR/"
 
     echo "==> Staging complete at: $STAGING_DIR"
 
-    # 3. Optional: Build local depot manifests using xpdepot.py
+    # 4. Optional: Build local depot manifests using xpdepot.py
     if [[ "$BUILD_DEPOT" == true ]]; then
         local DEPOT_DIR="$REPO_ROOT/build/depot/depot/$CHANNEL/CockpitNotes"
         echo "==> Generating depot manifests with xpdepot.py for $CHANNEL..."

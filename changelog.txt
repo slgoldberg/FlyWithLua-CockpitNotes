@@ -2,6 +2,20 @@
 FlyWithLua CockpitNotes - Changelog
 ================================================================================
 
+Version 1.0.2 (Beta Channel - Phase 3 Suite)
+--------------------------------------------------------------------------------
+- Cutting-edge Phase 3 build for FlyWithLua developmental release.
+- Native C++11 file selection suite integration.
+- imgui.FilePickerCombo microsecond directory scanning (200px width).
+- In-cockpit native modal [Open...] and [Save As...] dialogs.
+- Tactile font scaling from 50% to 200% with header zoom controls.
+- Window resizing limits clamped to 720x280 minimum.
+- Dual-bracket Markdown support: standard CommonMark [text](url) and ![alt](img)
+  alongside legacy curly brackets.
+- Silent non-intrusive startup: window stays hidden until summoned.
+- Registered X-Plane command "FlyWithLua/CockpitNotes/toggle" for key/joystick binding.
+- Added FlyWithLua macro "Cockpit Notes: Toggle".
+
 Version 1.0.1
 --------------------------------------------------------------------------------
 - Silent non-intrusive startup: window stays hidden until summoned.
@@ -12,11 +26,10 @@ Version 1.0.1
 
 Version 1.0.0 (Initial Modular Standalone Release)
 --------------------------------------------------------------------------------
-- Phase 3 C++11 native file selection suite integration.
-- imgui.FilePickerCombo microsecond directory scanning for .md and .txt notes.
-- In-cockpit native modal [Open...] and [Save As...] dialogs.
-- Dual-bracket Markdown support: standard CommonMark [text](url) and ![alt](img)
-  alongside legacy curly brackets.
+- Initial modular standalone release.
+- Standalone in-cockpit Markdown scratchpad and flight notes system.
+- Self-contained directory scanning compatible with all FlyWithLua versions.
+- Live Markdown text editor with formatted preview.
 - Multi-note storage in FlyWithLua/Scripts/CockpitNotes/notes/ with starter
   flight checklists, flight plan, and scratchpad templates.
 - Multi-channel SkunkCrafts Updater integration (Main, beta, daily).

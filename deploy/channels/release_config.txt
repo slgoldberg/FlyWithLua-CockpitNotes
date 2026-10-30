@@ -1,9 +1,9 @@
 module|https://slgoldberg.github.io/FlyWithLua-CockpitNotes/depot/release/CockpitNotes
 name|CockpitNotes
-version|1.0.1
+version|1.0.0
 locked|false
 
 # --- Multi-Channel Demonstration Boilerplate ---
 # To offer extra channels in the SkunkCrafts Updater app, uncomment below:
-# channel.beta|https://slgoldberg.github.io/FlyWithLua-CockpitNotes/depot/beta/CockpitNotes
+channel.beta|https://slgoldberg.github.io/FlyWithLua-CockpitNotes/depot/beta/CockpitNotes
 # channel.daily|https://slgoldberg.github.io/FlyWithLua-CockpitNotes/depot/daily/CockpitNotes
