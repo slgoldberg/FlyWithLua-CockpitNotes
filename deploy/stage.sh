@@ -63,6 +63,10 @@ stage_channel() {
         local DEPOT_DIR="$REPO_ROOT/build/depot/depot/$CHANNEL/CockpitNotes"
         echo "==> Generating depot manifests with xpdepot.py for $CHANNEL..."
         python3 "$SCRIPT_DIR/xpdepot.py" --stage "$STAGING_DIR" --depot "$DEPOT_DIR"
+
+        # Copy depot-level metadata for SkunkCrafts Updater tabs
+        cp -a "$REPO_ROOT/changelog.txt" "$DEPOT_DIR/"
+        cp -a "$REPO_ROOT/readme.txt" "$DEPOT_DIR/"
     fi
 }
 
