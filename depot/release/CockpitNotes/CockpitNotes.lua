@@ -167,8 +167,8 @@ local alt = get("sim/flightmodel/position/elevation")
 ]]
 
 -- Rich Markdown content for the "About" dialog
-local about_markdown_text = [[# Cockpit Markdown Notes & Scratchpad
-<badge green>v1.1</badge> <pill blue>FlyWithLua Next-Gen</pill>
+local about_markdown_text = [[# FlyWithLua Cockpit Notes
+<badge green>v1.0.1 Standalone</badge> <pill blue>Phase 3 Suite</pill>
 
 An interactive in-cockpit Markdown scratchpad and flight notes system for X-Plane 12 flight operations.
 
@@ -1350,35 +1350,68 @@ end
 
 function md_editor_on_close(wnd)
     -- Do not overwrite notes on window close; saves must be explicit via 'Save Notes'
+    editor_wnd = nil
 end
 
 -- ----------------------------------------------------------------------------
--- Window Creation & Initialization
+-- Window Lifecycle (Lazy Startup & In-Cockpit Toggle)
 -- ----------------------------------------------------------------------------
-local screen_w, screen_h = 1920, 1080
-if XPLMGetScreenSize then
-    screen_w, screen_h = XPLMGetScreenSize()
+function show_cockpit_notes()
+    if editor_wnd then return end
+
+    local screen_w, screen_h = 1920, 1080
+    if XPLMGetScreenSize then
+        screen_w, screen_h = XPLMGetScreenSize()
+    end
+
+    local wnd_w = 980
+    local wnd_h = 470
+    local wnd_x = math.max(30, math.floor((screen_w - wnd_w) * 0.10) + 200)
+    local wnd_y = math.max(40, math.floor((screen_h - wnd_h) * 0.15))
+
+    -- Create ImGui floating window (4th arg MUST be true for withImgui)
+    editor_wnd = float_wnd_create(wnd_w, wnd_h, 1, true)
+    float_wnd_set_position(editor_wnd, wnd_x, wnd_y)
+    float_wnd_set_title(editor_wnd, "Cockpit Notes v1.0.1")
+    float_wnd_set_imgui_builder(editor_wnd, "md_editor_on_build")
+    float_wnd_set_onclose(editor_wnd, "md_editor_on_close")
+
+    -- Explicitly disable outer window scrollbars and mouse-wheel scrolling so the
+    -- window never overflows horizontally. Inner child panes handle vertical scrolling.
+    if float_wnd_set_scrolling then
+        float_wnd_set_scrolling(editor_wnd, false)
+    end
+
+    -- Prevent resizing the window smaller than the minimum toolbar and pane bounds (540x260)
+    if float_wnd_set_resizing_limits then
+        float_wnd_set_resizing_limits(editor_wnd, 540, 260, 10000, 10000)
+    end
 end
 
-local wnd_w = 980
-local wnd_h = 470
-local wnd_x = math.max(30, math.floor((screen_w - wnd_w) * 0.10) + 200)
-local wnd_y = math.max(40, math.floor((screen_h - wnd_h) * 0.15))
-
--- Create ImGui floating window (4th arg MUST be true for withImgui)
-editor_wnd = float_wnd_create(wnd_w, wnd_h, 1, true)
-float_wnd_set_position(editor_wnd, wnd_x, wnd_y)
-float_wnd_set_title(editor_wnd, "Cockpit Markdown Notes & Scratchpad")
-float_wnd_set_imgui_builder(editor_wnd, "md_editor_on_build")
-float_wnd_set_onclose(editor_wnd, "md_editor_on_close")
-
--- Explicitly disable outer window scrollbars and mouse-wheel scrolling so the
--- window never overflows horizontally. Inner child panes handle vertical scrolling.
-if float_wnd_set_scrolling then
-    float_wnd_set_scrolling(editor_wnd, false)
+function hide_cockpit_notes()
+    if editor_wnd then
+        float_wnd_destroy(editor_wnd)
+        editor_wnd = nil
+    end
 end
 
--- Prevent resizing the window smaller than the minimum toolbar and pane bounds (540x260)
-if float_wnd_set_resizing_limits then
-    float_wnd_set_resizing_limits(editor_wnd, 540, 260, 10000, 10000)
+function toggle_cockpit_notes()
+    if editor_wnd then
+        hide_cockpit_notes()
+    else
+        show_cockpit_notes()
+    end
 end
+
+-- ----------------------------------------------------------------------------
+-- Command & Macro Menu Registration
+-- ----------------------------------------------------------------------------
+create_command(
+    "FlyWithLua/CockpitNotes/toggle",
+    "Toggle Cockpit Notes & Scratchpad window",
+    "toggle_cockpit_notes()",
+    "",
+    ""
+)
+
+add_macro("Cockpit Notes: Toggle", "command_once('FlyWithLua/CockpitNotes/toggle')")
