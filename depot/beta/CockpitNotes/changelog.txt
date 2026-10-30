@@ -1,0 +1,14 @@
+================================================================================
+FlyWithLua CockpitNotes - Changelog
+================================================================================
+
+Version 1.0.0 (Initial Modular Standalone Release)
+--------------------------------------------------------------------------------
+- Phase 3 C++11 native file selection suite integration.
+- imgui.FilePickerCombo microsecond directory scanning for .md and .txt notes.
+- In-cockpit native modal [Open...] and [Save As...] dialogs.
+- Dual-bracket Markdown support: standard CommonMark [text](url) and ![alt](img)
+  alongside legacy curly brackets.
+- Multi-note storage in FlyWithLua/Scripts/CockpitNotes/notes/ with starter
+  flight checklists, flight plan, and scratchpad templates.
+- Multi-channel SkunkCrafts Updater integration (Main, beta, daily).
