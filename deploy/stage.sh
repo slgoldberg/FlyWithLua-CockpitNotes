@@ -15,6 +15,7 @@ set -euo pipefail
 TARGET="${1:-release}"
 SYNC_FWL=false
 BUILD_DEPOT=false
+PACKAGE_ZIP=false
 
 for arg in "$@"; do
     if [[ "$arg" == "--sync-fwl" ]]; then
@@ -22,6 +23,9 @@ for arg in "$@"; do
     fi
     if [[ "$arg" == "--build-depot" ]]; then
         BUILD_DEPOT=true
+    fi
+    if [[ "$arg" == "--package-zip" ]]; then
+        PACKAGE_ZIP=true
     fi
 done
 
@@ -88,4 +92,28 @@ if [[ "$SYNC_FWL" == true ]]; then
         cp -a "$REPO_ROOT/deploy/channels/release_config.txt" "$FWL_DEST/skunkcrafts_updater.cfg"
     fi
     echo "==> FlyWithLua distribution payload synchronized successfully!"
+fi
+
+# 5. Optional: Package clean client distribution zip
+if [[ "$PACKAGE_ZIP" == true ]]; then
+    DIST_ROOT="$REPO_ROOT/build/dist"
+    DIST_PAYLOAD="$DIST_ROOT/CockpitNotes"
+    echo "==> Packaging client release zip..."
+    rm -rf "$DIST_ROOT"
+    mkdir -p "$DIST_PAYLOAD/notes"
+
+    RELEASE_DEPOT="$REPO_ROOT/build/depot/depot/release/CockpitNotes"
+    if [[ -d "$RELEASE_DEPOT" ]]; then
+        cp -a "$RELEASE_DEPOT/CockpitNotes.lua" "$DIST_PAYLOAD/"
+        cp -a "$RELEASE_DEPOT/notes/"* "$DIST_PAYLOAD/notes/"
+        cp -a "$RELEASE_DEPOT/skunkcrafts_updater.cfg" "$DIST_PAYLOAD/"
+    else
+        cp -a "$REPO_ROOT/CockpitNotes.lua" "$DIST_PAYLOAD/"
+        cp -a "$REPO_ROOT/notes/"* "$DIST_PAYLOAD/notes/"
+        cp -a "$REPO_ROOT/deploy/channels/release_config.txt" "$DIST_PAYLOAD/skunkcrafts_updater.cfg"
+    fi
+
+    cd "$DIST_ROOT"
+    zip -q -r "CockpitNotes-release.zip" CockpitNotes
+    echo "==> Distribution zip packaged at: $DIST_ROOT/CockpitNotes-release.zip"
 fi

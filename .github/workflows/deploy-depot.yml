@@ -51,9 +51,9 @@ jobs:
       - name: Package Release Zip
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          mkdir -p build/dist
-          cd build/staging/release
-          zip -r ../../dist/CockpitNotes-${{ steps.channel.outputs.tag }}.zip CockpitNotes
+          ./deploy/stage.sh release --build-depot --package-zip
+          cd build/dist
+          cp CockpitNotes-release.zip CockpitNotes-${{ steps.channel.outputs.tag }}.zip
 
       - name: Upload Release Asset
         if: startsWith(github.ref, 'refs/tags/')
