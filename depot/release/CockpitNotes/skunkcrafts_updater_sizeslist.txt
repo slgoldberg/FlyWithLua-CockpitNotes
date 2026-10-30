@@ -1,5 +1,5 @@
-CockpitNotes.lua|58767
-notes/cockpit_notes.md|813
-notes/diversion_briefing.md|2255
-notes/fuel_and_weight.md|1854
-notes/metar_taf_scratchpad.md|2047
+CockpitNotes.lua|57097
+notes/cockpit_notes.md|1058
+notes/diversion_briefing.md|2342
+notes/fuel_and_weight.md|1928
+notes/metar_taf_scratchpad.md|2129

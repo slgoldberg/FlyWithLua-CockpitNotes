@@ -1,4 +1,4 @@
-CockpitNotes.lua|1204429120
+CockpitNotes.lua|919097467
 notes/cockpit_notes.md|-1
 notes/diversion_briefing.md|-1
 notes/fuel_and_weight.md|-1

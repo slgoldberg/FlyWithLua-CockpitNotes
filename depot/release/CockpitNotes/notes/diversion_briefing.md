@@ -3,6 +3,7 @@
 * **Primary Destination:** `KMSP (Minneapolis-St. Paul)`
 * **Designated Alternate:** `KSBN (South Bend Regional)`
 * **Diversion Reason:** `Below Minima / Weather / System Advisory`
+* **Airport Information:** [AirNav KSBN Overview](https://www.airnav.com/airport/KSBN)
 
 ---
 
