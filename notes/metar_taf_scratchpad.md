@@ -1,8 +1,18 @@
 # METAR & TAF Weather Scratchpad
 
+![NOAA Weather](https://img.shields.io/badge/Source-NOAA_AWC-blue) ![ORD Category](https://img.shields.io/badge/ORD-VFR-green) ![MSP Category](https://img.shields.io/badge/MSP-MVFR-yellow)
+
 * **Flight:** `KORD -> KMSP` | **Briefing Time:** `1850Z`
-* **Flight Category:** ORD <badge green>VFR</badge> | MSP <badge yellow>MVFR</badge>
 * **Weather Source:** [NOAA Aviation Weather Center](https://aviationweather.gov)
+
+---
+
+## Route Weather Stations Comparison
+| Station | Category | Wind | Visibility | Ceiling (AGL) | Altimeter |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **KORD** (Departure) | <badge green>VFR</badge> | 280° @ 14G21kt | 10 SM | BKN 4,500 ft | 30.12 inHg |
+| **KMSP** (Destination) | <badge yellow>MVFR</badge> | 330° @ 18G26kt | 4 SM (-SN) | BKN 1,500 ft | 29.88 inHg |
+| **KSBN** (Alternate) | <badge green>VFR</badge> | 310° @ 14G22kt | 6 SM (-RA) | OVC 2,500 ft | 29.94 inHg |
 
 ---
 

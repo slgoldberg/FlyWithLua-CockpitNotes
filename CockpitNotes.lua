@@ -143,22 +143,30 @@ end
 
 -- Default scratchpad template loaded if no saved notes exist on disk
 local initial_doc = [[# Cockpit Notes & Scratchpad
+
+![FlyWithLua](https://img.shields.io/badge/FlyWithLua-Phase_3_Suite-blue) ![X-Plane 12](https://img.shields.io/badge/Simulator-X--Plane_12-informational) ![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+
 Welcome to your in-cockpit **FlyWithLua Markdown Editor**!
 
 * **Live Formatting:** Headers, **bold**, *italic*, <u>underline</u>, and ~~strikethrough~~.
+* **Interactive GFM Tables:** Markdown tables support drag-resizable column dividers and column sorting.
+* **Async Remote Badges:** Syntax like `![Badge](https://img.shields.io/...)` loads smoothly in the background.
 * **Avionics Badges:** <badge green>ENG 1 NORMAL</badge> <badge yellow>FUEL PUMP AUTO</badge> <badge red>FIRE TEST</badge>
 * **Keycaps & Shortcuts:** Press <kbd>Alt+F4</kbd> or <kbd>Ctrl+Shift+P</kbd>
 * **Dual-Bracket Hyperlinks:** [FlyWithLua Documentation](https://github.com/sparker256/FlyWithLua) or {Cockpit Notes}(https://github.com/slgoldberg/FlyWithLua-CockpitNotes)
-* **Checklists:**
-  - `[x]` Pre-flight briefing complete
-  - `[x]` Altimeter set to standard: `29.92 inHg`
-  - `[ ]` Clearance copied and read back
 
-```lua
--- Quick Cockpit Dataref Inspection
-local tas = get("sim/flightmodel/position/true_airspeed")
-local alt = get("sim/flightmodel/position/elevation")
-```
+### Flight Plan Waypoint Sample
+| Fix / Point | Altitude | Distance | Fuel Rem | Status |
+| :--- | :---: | :---: | :---: | :---: |
+| **KORD** (Dep) | Field | 0 NM | 18,800 lbs | <badge green>DEPARTED</badge> |
+| **JOT** (VOR) | 5,000 | 28 NM | 17,900 lbs | <pill green>CLIMB</pill> |
+| **DLL** (VOR) | FL340 | 142 NM | 14,800 lbs | <pill blue>CRUISE</pill> |
+| **KMSP** (Dest) | Field | 334 NM | 9,400 lbs | <badge yellow>PLANNED</badge> |
+
+### Cockpit Checklist
+- `[x]` Pre-flight briefing complete
+- `[x]` Altimeter set to standard: `29.92 inHg`
+- `[ ]` Clearance copied and read back
 
 <pill blue>TIP</pill> Use the **Mode** buttons above to switch between pure Editor, Split View, and full-screen Preview.
 ]]
@@ -172,6 +180,8 @@ An interactive in-cockpit Markdown scratchpad and flight notes system for X-Plan
 ---
 
 ### Key Capabilities
+* **Interactive GFM Tables:** Standard GitHub Flavored Markdown tables (`| Col 1 | Col 2 |`) with drag-resizable column dividers, right-border table width adjustment, and column sorting.
+* **Async Remote Images & Badges:** Non-blocking background worker threads for `![Badge](https://img.shields.io/...)` badges and online diagrams without sim frame drops.
 * **Live Markdown Typography:** Headers (`#`, `##`), **bold**, *italic*, <u>underline</u>, ~~strikethrough~~, bulleted lists, and formatted code blocks with syntax styling.
 * **Dual-Bracket Hyperlinks:** Standard CommonMark `[Label](url)` and `![Alt](img)` links supported side-by-side with legacy `{...}` brackets.
 * **In-Cockpit File Management:** Turnkey C++11 native directory combo (`imgui.FilePickerCombo`) and in-viewport modal `[Open...]` and `[Save As...]` dialogs.
@@ -270,7 +280,52 @@ local templates = {
 - `[ ]` Thrust reversers checked: <badge green>ARMED</badge>
 ]],
 
+    ["IFR Navigation Log (NavLog)"] = [[# IFR Navigation Log & Route Plan
+
+![Flight](https://img.shields.io/badge/Flight-KORD_%E2%9C%88_KMSP-blue) ![Cruise](https://img.shields.io/badge/Cruise-FL340_M0.78-informational) ![Rules](https://img.shields.io/badge/Rules-IFR-green) ![Dispatch](https://img.shields.io/badge/Dispatch-SimBrief-orange)
+
+* **Route:** `KORD DCT JOT V100 BAE DLL ALTRN KMSP`
+* **Cruise Profile:** `FL340 / Mach 0.78` | **Groundspeed:** `~440 kt`
+* **Distance:** `334 NM` | **Est Flight Time:** `00:54`
+
+---
+
+## Communication & Nav Frequencies
+| Station / Service | Facility | Frequency | Status |
+| :--- | :--- | :---: | :---: |
+| **ORD ATIS** | Arrival / Departure | 135.400 | <badge green>ACTIVE</badge> |
+| **ORD Clearance** | Pre-Taxi Clearance | 121.150 | Monitored |
+| **ORD Ground** | Metering / North Ground | 124.125 | Standby |
+| **ORD Tower** | Local Control (28R) | 120.750 | Standby |
+| **Chicago Center** | Enroute Radar Control | 133.500 | Standby |
+| **MSP Approach** | Minneapolis Terminal | 119.300 | Planned |
+| **MSP ILS 30R** | Localizer & Glidepath | 110.300 | Planned |
+
+---
+
+## Waypoint Navigation Log
+| Fix / Waypoint | Airway | Course | Leg (NM) | Rem (NM) | Altitude | Est Fuel (lbs) | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **KORD** | — | — | 0 | 334 | Field | 18,800 | <badge green>DEP</badge> |
+| **JOT** (Joliet VOR) | DCT | 215° | 28 | 306 | 5,000 | 17,900 | <pill green>CLIMB</pill> |
+| **BAE** (Badger VOR) | V100 | 322° | 64 | 242 | FL240 | 16,100 | <pill green>CLIMB</pill> |
+| **DLL** (Dells VOR) | V100 | 305° | 78 | 164 | FL340 | 14,800 | <pill blue>CRUISE</pill> |
+| **ALTRN** (Waypoint) | Direct | 296° | 92 | 72 | FL340 | 12,600 | <pill blue>CRUISE</pill> |
+| **KMSP** (Destination)| Direct | 298° | 72 | 0 | Field | 9,400 | <badge yellow>ARR</badge> |
+
+---
+
+## In-Flight Verification Checklist
+- `[ ]` Altimeter reset to standard (29.92 / 1013 hPa) passing 18,000 ft (FL180)
+- `[ ]` Top of Climb fuel check verified against flight plan burn
+- `[ ]` Minneapolis ATIS copied (Wind, Runway in use, Altimeter)
+- `[ ]` Top of Descent calculated: 3x altitude loss rule + 10 NM margin
+- `[ ]` Approach briefed: ILS 30R DA `1,041 ft MSL`, missed approach altitude `4,000 ft`
+]],
+
     ["Fuel & Weight Planning"] = [[# Fuel & Weight Planning
+
+![SimBrief](https://img.shields.io/badge/Dispatch-SimBrief_Validated-green) ![Fuel State](https://img.shields.io/badge/Ramp_Fuel-18.8k_lbs-blue) ![Type](https://img.shields.io/badge/Type-B737--800-informational)
 
 * **Aircraft:** `B737-800 / A320` | **Route:** `KORD -> KMSP`
 * **Cruise:** `FL340 / M0.78` | **Cost Index:** `28`
@@ -279,30 +334,37 @@ local templates = {
 ---
 
 ## Weight & Balance Limits
-* **Operating Empty Weight (OEW):** `91,300 lbs`
-* **Payload (Pax + Bags + Cargo):** `35,400 lbs` (158 Pax / 4,800 lbs Bag)
-* **Zero Fuel Weight (ZFW):** `126,700 lbs` (Max: `138,300 lbs`) <badge green>+11,600 lbs OK</badge>
-* **Planned Takeoff Weight (TOW):** `145,500 lbs` (Max: `174,200 lbs`) <badge green>+28,700 lbs OK</badge>
-* **Estimated Landing Weight (ELW):** `136,100 lbs` (Max: `146,300 lbs`) <badge green>+10,200 lbs OK</badge>
+| Parameter | Planned (lbs) | Max Limit (lbs) | Margin | Status |
+| :--- | :---: | :---: | :---: | :---: |
+| **OEW** (Operating Empty) | 91,300 | — | — | <badge green>OK</badge> |
+| **Payload** (Pax + Cargo) | 35,400 | 43,000 | +7,600 | <badge green>OK</badge> |
+| **ZFW** (Zero Fuel Weight) | 126,700 | 138,300 | +11,600 | <badge green>+11,600 lbs</badge> |
+| **TOW** (Takeoff Weight) | 145,500 | 174,200 | +28,700 | <badge green>+28,700 lbs</badge> |
+| **ELW** (Landing Weight) | 136,100 | 146,300 | +10,200 | <badge green>+10,200 lbs</badge> |
+
 * **Center of Gravity (CG):** `21.4% MAC` | **Takeoff Trim:** <pill green>5.2 ANU</pill>
 
 ---
 
 ## Fuel Planning & Reserves (FAR / ICAO)
-* **Taxi Out Fuel:** `800 lbs` (APU + single-engine taxi)
-* **Trip Fuel (KORD-KMSP):** `9,400 lbs` (Enroute burn at FL340)
-* **Contingency Fuel (5%):** `470 lbs` (Route / enroute wind margin)
-* **Alternate Fuel (to KSBN):** `3,100 lbs` (Climb, cruise FL220, descent & missed)
-* **Final Reserve Fuel:** `2,450 lbs` (ICAO 30 min hold @ 1,500 ft AGL)
-* **Extra / Discretionary:** `2,580 lbs` (Terminal vectoring & winter de-icing)
+| Fuel Stage | Amount (lbs) | Flow Time | Profile Notes |
+| :--- | :---: | :---: | :--- |
+| **Taxi Out** | 800 | 00:15 | APU + single-engine taxi |
+| **Trip Fuel (KORD-KMSP)** | 9,400 | 01:08 | Cruise FL340 enroute burn |
+| **Contingency (5%)** | 470 | 00:05 | Enroute wind / track variance |
+| **Alternate (KSBN)** | 3,100 | 00:25 | Climb to FL220, descent & missed |
+| **Final Reserve** | 2,450 | 00:30 | ICAO legal 30 min @ 1,500 ft |
+| **Extra / Discretionary** | 2,580 | 00:20 | Terminal vectoring & winter ops |
 
 ---
 
 ### Fuel Thresholds & Bingo State
-* **Planned Ramp / Block Fuel:** <pill green>18,800 lbs</pill>
-* **Minimum Takeoff Fuel:** `18,000 lbs`
-* **Diversion Bingo Fuel (MSP -> KSBN):** <badge yellow>5,550 lbs</badge>
-* **Emergency Fuel Threshold (Mayday):** <badge red>2,450 lbs</badge>
+| Threshold | Quantity | Indicator | Required Action |
+| :--- | :---: | :---: | :--- |
+| **Ramp / Block Fuel** | 18,800 lbs | <pill green>NORMAL</pill> | Totalizer verified against uplift receipt |
+| **Min Takeoff Fuel** | 18,000 lbs | <pill green>NORMAL</pill> | Abort takeoff if below threshold |
+| **Diversion Bingo** | 5,550 lbs | <badge yellow>BINGO</badge> | Divert immediately to KSBN alternate |
+| **Emergency Fuel** | 2,450 lbs | <badge red>MAYDAY</badge> | Declare "Mayday Fuel" with ATC |
 
 ---
 
@@ -316,6 +378,8 @@ local templates = {
 
     ["Diversion Briefing"] = [[# In-Flight Diversion Briefing
 
+![Diversion Plan](https://img.shields.io/badge/Alternate-KSBN_South_Bend-yellow) ![Approach](https://img.shields.io/badge/Approach-ILS_27L-blue) ![Fuel](https://img.shields.io/badge/Bingo-5.5k_lbs-orange)
+
 * **Primary Destination:** `KMSP (Minneapolis-St. Paul)`
 * **Designated Alternate:** `KSBN (South Bend Regional)`
 * **Diversion Reason:** `Below Minima / Weather / System Advisory`
@@ -323,12 +387,15 @@ local templates = {
 
 ---
 
-## Alternate Airport Overview
-* **Airport & Elevation:** `KSBN / SBN` | **Field Elevation:** `799 ft MSL`
-* **Bearing & Distance:** `085° Magnetic / 64 NM`
+## Alternate Airport & Runway Assessment
+| Runway | Dimensions | Surface | Approach NavAid | Wind Component |
+| :--- | :---: | :---: | :--- | :---: |
+| **09R / 27L** | 8,414 x 150 ft | Concrete | ILS 27L (109.90 MHz / 274°) | 11 kt HW, 9 kt XW |
+| **09L / 27R** | 4,300 x 75 ft | Asphalt | Visual / GPS | Not Authorized |
+| **18 / 36** | 7,100 x 150 ft | Asphalt | VOR / GPS 36 | 13 kt XW |
+
+* **Airport Elevation:** `799 ft MSL` | **Bearing & Distance:** `085° Mag / 64 NM`
 * **Estimated Time Enroute (ETE):** `14 minutes` (High-speed descent profile)
-* **Longest Runway:** `Runway 09R/27L (8,414 x 150 ft - Grooved Concrete)`
-* **Primary Nav Aid:** `ILS 27L (Freq: 109.90 MHz | Course: 274°)`
 * **Approach Minima / DA:** <pill blue>999 ft MSL (200 ft AGL) / RVR 2400</pill>
 
 ---
@@ -336,19 +403,20 @@ local templates = {
 ## Weather Minima & Runway Conditions
 * **Current METAR:** `KSBN 281854Z 31014G22KT 6SM -RA SCT018 OVC025 08/04 A2994`
 * **Surface Wind:** `310° @ 14 kt, gusts 22 kt`
-* **Runway 27L Component:** `Headwind 11 kt, Crosswind 9 kt from right`
 * **Braking Action:** GOOD (Runway wet, no standing water reported)
 
 ---
 
 ## Fuel Reserves & Bingo Status
-* **Fuel on Board (FOB) at Decision:** `7,600 lbs`
-* **Planned Burn to Alternate:** `2,100 lbs`
-* **Estimated FOB on Touchdown:** `5,500 lbs`
-* **Final Legal Reserve (30 min):** `2,450 lbs`
-* **Usable Holding Margin:** <badge green>+3,050 lbs (~38 min hold)</badge>
-* **Minimum Diversion Bingo:** <badge yellow>5,550 lbs</badge>
-* **Emergency Fuel (Mayday):** <badge red>2,450 lbs</badge>
+| State / Threshold | Fuel (lbs) | Endurance | Status |
+| :--- | :---: | :---: | :---: |
+| **FOB at Decision** | 7,600 | 01:35 | <pill green>ONBOARD</pill> |
+| **Burn to Alternate** | 2,100 | 00:25 | Planned Burn |
+| **Estimated Touchdown FOB** | 5,500 | 01:10 | <badge green>SAFE</badge> |
+| **Final Legal Reserve** | 2,450 | 00:30 | Required |
+| **Usable Holding Margin** | +3,050 | +00:38 | <badge green>+38 min hold</badge> |
+| **Minimum Diversion Bingo** | 5,550 | — | <badge yellow>BINGO</badge> |
+| **Emergency Fuel Threshold** | 2,450 | — | <badge red>MAYDAY</badge> |
 
 ---
 
@@ -366,9 +434,19 @@ local templates = {
 
     ["METAR / TAF Scratchpad"] = [[# METAR & TAF Weather Scratchpad
 
+![NOAA Weather](https://img.shields.io/badge/Source-NOAA_AWC-blue) ![ORD Category](https://img.shields.io/badge/ORD-VFR-green) ![MSP Category](https://img.shields.io/badge/MSP-MVFR-yellow)
+
 * **Flight:** `KORD -> KMSP` | **Briefing Time:** `1850Z`
-* **Flight Category:** ORD <badge green>VFR</badge> | MSP <badge yellow>MVFR</badge>
 * **Weather Source:** [NOAA Aviation Weather Center](https://aviationweather.gov)
+
+---
+
+## Route Weather Stations Comparison
+| Station | Category | Wind | Visibility | Ceiling (AGL) | Altimeter |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **KORD** (Departure) | <badge green>VFR</badge> | 280° @ 14G21kt | 10 SM | BKN 4,500 ft | 30.12 inHg |
+| **KMSP** (Destination) | <badge yellow>MVFR</badge> | 330° @ 18G26kt | 4 SM (-SN) | BKN 1,500 ft | 29.88 inHg |
+| **KSBN** (Alternate) | <badge green>VFR</badge> | 310° @ 14G22kt | 6 SM (-RA) | OVC 2,500 ft | 29.94 inHg |
 
 ---
 
@@ -1139,6 +1217,14 @@ local function md_editor_render_content()
         if toolbar_button("Code", "**Lua Code Block**\n\nWrap selection in fenced ```lua block with live preview.") then wrap_or_insert("```lua\n", "\n```", "-- code block\n") end
         imgui.SameLine()
         if toolbar_button("Link", "**Markdown Link**\n\nWrap selection in CommonMark `[Label](url)` hyperlink.") then wrap_or_insert("[", "](https://)", "Link text") end
+        imgui.SameLine()
+        if toolbar_button("Table", "**GFM Markdown Table**\n\nInsert interactive GFM table with drag-resizable columns and column sorting.") then
+            wrap_or_insert("\n| Parameter | Value | Status |\n| :--- | :---: | :---: |\n| Item 1 | 100 | <badge green>OK</badge> |\n| Item 2 | 200 | <pill blue>ACTIVE</pill> |\n", "", "")
+        end
+        imgui.SameLine()
+        if toolbar_button("Badge", "**Async Remote Badge / Image**\n\nInsert async non-blocking shields.io or web image badge.") then
+            wrap_or_insert("![Badge](https://img.shields.io/badge/", "-blue)", "Title-Value")
+        end
 
         -- Templates Dropdown
         imgui.SameLine()
@@ -1162,7 +1248,7 @@ local function md_editor_render_content()
                 print("[FlyWithLua CockpitNotes] Error in Templates Combo: " .. tostring(err))
             end
         end
-        show_tooltip("**Aviation Templates**\n\nLoad pre-formatted cockpit checklists and scratchpads:\n* **ATIS Copy Pad**\n* **IFR Clearance (CRAFT)**\n* **Pre-Flight Checklist**\n* **Fuel & Weight Planning**\n* **Diversion Briefing**\n* **METAR / TAF Scratchpad**\n* **FlyWithLua Scratchpad**")
+        show_tooltip("**Aviation Templates**\n\nLoad pre-formatted cockpit checklists and scratchpads:\n* **ATIS Copy Pad**\n* **IFR Clearance (CRAFT)**\n* **Pre-Flight Checklist**\n* **IFR Navigation Log (NavLog)**\n* **Fuel & Weight Planning**\n* **Diversion Briefing**\n* **METAR / TAF Scratchpad**\n* **FlyWithLua Scratchpad**")
 
         imgui.Separator()
     end
@@ -1405,9 +1491,9 @@ function show_cockpit_notes()
         float_wnd_set_scrolling(editor_wnd, false)
     end
 
-    -- Prevent resizing the window smaller than the minimum toolbar and pane bounds (720x280)
+    -- Prevent resizing the window smaller than the minimum toolbar and pane bounds (740x280)
     if float_wnd_set_resizing_limits then
-        float_wnd_set_resizing_limits(editor_wnd, 720, 280, 10000, 10000)
+        float_wnd_set_resizing_limits(editor_wnd, 740, 280, 10000, 10000)
     end
 end
 
