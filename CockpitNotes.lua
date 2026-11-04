@@ -83,10 +83,28 @@ local dec_repeat_count = 0   -- Counter to throttle repeat speed on [-] (1/4 rat
 local inc_repeat_count = 0   -- Counter to throttle repeat speed on [+] (1/4 rate)
 
 -- Split View Layout & Synchronized Scrolling State
-local split_ratio             = 0.50  -- Draggable divider ratio (clamped 0.15 to 0.85)
-local should_scroll_to_bottom = false -- Auto-scroll flag triggered on Quick Action insertion
-local active_scroll_source    = nil   -- "editor" or "preview" for two-way scroll synchronization
-local sync_scroll_ratio       = 0.0   -- Proportional scroll ratio (0.0 to 1.0)
+local split_ratio              = 0.50   -- Draggable divider ratio (clamped 0.15 to 0.85)
+local should_scroll_to_bottom  = false  -- Auto-scroll flag triggered on Quick Action insertion
+local editor_word_wrap         = true   -- Auto-wrap toggle on editor (defaults to ON)
+local sync_scroll_enabled      = true   -- Sync scroll toggle on preview (defaults to ON)
+local sync_scroll_just_enabled = false  -- Flag to trigger instant catch-up alignment
+local last_both_scrollable     = false  -- Track transitions when both panes become scrollable
+
+-- Measured metrics recorded at EndChild
+local editor_scroll_y       = 0
+local editor_scroll_max_y   = 0
+local preview_scroll_y      = 0
+local preview_scroll_max_y  = 0
+local target_preview_scroll = nil
+local target_editor_scroll  = nil
+
+-- Pane screen coordinates for child-hierarchy immune hover detection
+local left_pane_x   = nil
+local right_pane_x  = nil
+local pane_y        = nil
+local left_pane_w   = nil
+local right_pane_w  = nil
+local actual_pane_h = nil
 
 -- ----------------------------------------------------------------------------
 -- File Persistence & In-Cockpit File Dialogs (Turnkey ImgWindow File Suite)
@@ -807,6 +825,15 @@ local function clear_active_tooltip()
     elseif imgui.ClearActiveTooltip then
         imgui.ClearActiveTooltip()
     end
+end
+
+-- Rect Hover Helper (Immune to Child Window Hierarchy)
+local function is_mouse_in_rect(rx, ry, rw, rh)
+    if not rx or not ry or not rw or not rh or rw <= 0 or rh <= 0 then return false end
+    if not imgui.GetMousePos then return false end
+    local mx, my = imgui.GetMousePos()
+    if not mx or not my then return false end
+    return (mx >= rx and mx <= rx + rw and my >= ry and my <= ry + rh)
 end
 
 -- Helper function to render modern Markdown TimedTooltips (or fallback to SetTooltip)
@@ -1542,36 +1569,51 @@ local function md_editor_render_content()
         local left_w     = math.max(60, math.min(avail_w - splitter_w - 60, math.floor((avail_w - splitter_w) * split_ratio)))
         local right_w    = avail_w - splitter_w - left_w
 
-        -- Left Pane: Editor (with Word-Wrap enabled)
+        -- Configure InputTextMultiline flags with or without word wrap:
+        local split_flags = ImGuiInputTextFlags_AllowTabInput
+        if editor_word_wrap then
+            split_flags = split_flags + ImGuiInputTextFlags_WordWrap
+        end
+
+        -- Left Pane: Editor (SplitEditorChild)
         if imgui.BeginChild("SplitEditorChild", left_w, pane_h, 1) then
-            -- Two-way proportional scroll sync: mirror scroll if preview was scrolled
-            if active_scroll_source == "preview" and imgui.GetScrollMaxY and imgui.SetScrollY then
-                local max_y = imgui.GetScrollMaxY()
-                if max_y > 0 then
-                    imgui.SetScrollY(sync_scroll_ratio * max_y)
-                end
+            if imgui.GetWindowPos and imgui.GetWindowSize then
+                local wx, wy = imgui.GetWindowPos()
+                local ww, wh = imgui.GetWindowSize()
+                left_pane_x   = wx
+                pane_y        = wy
+                left_pane_w   = ww
+                actual_pane_h = wh
             end
 
+            -- Apply deferred scroll if preview drove the editor:
+            if target_editor_scroll and imgui.SetScrollY then
+                imgui.SetScrollY(target_editor_scroll)
+                target_editor_scroll = nil
+            end
+
+            imgui.AlignTextToFramePadding()
             imgui.TextDisabled("RAW MARKDOWN SOURCE:")
 
-            local win_w = (imgui.GetWindowWidth and imgui.GetWindowWidth()) or left_w
-            local copy_fn = imgui.CopyBufferButton or imgui.CopyButton
-            local right_target = win_w - (copy_fn and 135 or 65)
+            -- Right-aligned Auto-wrap checkbox
+            local wrap_w = 95
             local cur_x = (imgui.GetCursorPosX and imgui.GetCursorPosX()) or 160
-            if right_target > cur_x + 10 then
-                imgui.SameLine(right_target)
+            local right_wrap_x = left_w - wrap_w - 15
+            if right_wrap_x > cur_x + 10 then
+                imgui.SameLine(right_wrap_x)
             else
                 imgui.SameLine()
             end
-            if toolbar_button("Clear##split", "**Clear Buffer**\n\nEmpty the entire editor scratchpad.") then
-                editor_text = ""
+            local wrap_changed, new_wrap = imgui.Checkbox("Auto-wrap##opt_wrap", editor_word_wrap)
+            if wrap_changed then
+                editor_word_wrap = new_wrap
                 editor_epoch = editor_epoch + 1
-                just_formatted = true
             end
-            if copy_fn then
-                imgui.SameLine(0, 4)
-                copy_fn("##copy_buf_split", editor_text)
+            if imgui.IsItemHovered and imgui.IsItemHovered() then
+                show_tooltip("**Auto-wrap (Word Wrap)**\n\nWrap long lines soft to pane width.\nUncheck to allow horizontal scrolling.")
             end
+
+            imgui.Separator()
 
             local editor_font = "RobotoMono-Regular"
             local editor_font_size = 16.0 * content_zoom
@@ -1584,12 +1626,16 @@ local function md_editor_render_content()
             local avail_pw, avail_ph = imgui.GetContentRegionAvail()
             local visual_lines = 0
             for line in string.gmatch((editor_text or "") .. "\n", "(.-)\r?\n") do
-                local wrap_chars = math.max(12, math.floor(left_w / (9.5 * content_zoom)))
-                visual_lines = visual_lines + math.max(1, math.ceil(#line / wrap_chars))
+                if editor_word_wrap then
+                    local wrap_chars = math.max(12, math.floor(left_w / (9.5 * content_zoom)))
+                    visual_lines = visual_lines + math.max(1, math.ceil(#line / wrap_chars))
+                else
+                    visual_lines = visual_lines + 1
+                end
             end
             local editor_box_h = math.max(avail_ph or 200, (visual_lines + 4) * line_h + 60)
 
-            local changed, new_text = imgui.InputTextMultiline("##editor_split_" .. editor_epoch, editor_text, MAX_TEXT_BYTES, -1, editor_box_h, editor_input_flags)
+            local changed, new_text = imgui.InputTextMultiline("##editor_split_" .. editor_epoch, editor_text, MAX_TEXT_BYTES, -1, editor_box_h, split_flags)
             if imgui.PopFont then
                 imgui.PopFont()
             end
@@ -1605,20 +1651,16 @@ local function md_editor_render_content()
                 if imgui.SetScrollHereY then
                     imgui.SetScrollHereY(1.0)
                 end
-                sync_scroll_ratio = 1.0
-                active_scroll_source = "editor"
+                if preview_scroll_max_y > 0 then
+                    target_preview_scroll = preview_scroll_max_y
+                end
                 should_scroll_to_bottom = false
             end
 
-            -- Track scroll if editor pane is hovered or active
-            if imgui.IsWindowHovered and imgui.IsWindowHovered() then
-                if imgui.GetScrollMaxY and imgui.GetScrollY then
-                    local max_y = imgui.GetScrollMaxY()
-                    if max_y > 0 then
-                        sync_scroll_ratio = math.max(0.0, math.min(1.0, imgui.GetScrollY() / max_y))
-                        active_scroll_source = "editor"
-                    end
-                end
+            -- At the very END of SplitEditorChild (before EndChild):
+            if imgui.GetScrollY and imgui.GetScrollMaxY then
+                editor_scroll_y = imgui.GetScrollY()
+                editor_scroll_max_y = imgui.GetScrollMaxY()
             end
 
             imgui.EndChild()
@@ -1667,35 +1709,107 @@ local function md_editor_render_content()
 
         imgui.SameLine(0, 0)
 
-        -- Right Pane: Live Rendered Preview (with Soft-Wrapping enabled)
+        -- Right Pane: Live Rendered Preview (SplitPreviewChild)
         if imgui.BeginChild("SplitPreviewChild", right_w, pane_h, 1) then
-            -- Two-way proportional scroll sync: mirror scroll if editor was scrolled
-            if active_scroll_source == "editor" and imgui.GetScrollMaxY and imgui.SetScrollY then
-                local max_y = imgui.GetScrollMaxY()
-                if max_y > 0 then
-                    imgui.SetScrollY(sync_scroll_ratio * max_y)
+            if imgui.GetWindowPos and imgui.GetWindowSize then
+                local wx, wy = imgui.GetWindowPos()
+                local ww, wh = imgui.GetWindowSize()
+                right_pane_x  = wx
+                right_pane_w  = ww
+                if not actual_pane_h or actual_pane_h <= 0 then
+                    actual_pane_h = wh
                 end
             end
 
+            -- Apply deferred scroll if editor drove the preview:
+            if target_preview_scroll and imgui.SetScrollY then
+                imgui.SetScrollY(target_preview_scroll)
+                target_preview_scroll = nil
+            end
+
+            imgui.AlignTextToFramePadding()
             imgui.TextDisabled("LIVE RENDERED PREVIEW:")
+
+            -- Right-aligned Sync Scroll checkbox
+            local sync_w = 95
+            local cur_px = (imgui.GetCursorPosX and imgui.GetCursorPosX()) or 160
+            local right_sync_x = right_w - sync_w - 15
+            if right_sync_x > cur_px + 10 then
+                imgui.SameLine(right_sync_x)
+            else
+                imgui.SameLine()
+            end
+            local sync_changed, new_sync = imgui.Checkbox("Sync scroll##opt_sync", sync_scroll_enabled)
+            if sync_changed then
+                sync_scroll_enabled = new_sync
+                if sync_scroll_enabled then
+                    sync_scroll_just_enabled = true -- Trigger immediate realignment
+                end
+            end
+            if imgui.IsItemHovered and imgui.IsItemHovered() then
+                show_tooltip("**Synchronized Scrolling**\n\nProportionally syncs scroll positions between raw editor and rendered markdown.")
+            end
+
+            imgui.Separator()
 
             if imgui.SetWindowFontScale then
                 imgui.SetWindowFontScale(content_zoom)
             end
             imgui.MD.TextWrapped(format_tasks(editor_text))
 
-            -- Track scroll if preview pane is hovered or active
-            if imgui.IsWindowHovered and imgui.IsWindowHovered() then
-                if imgui.GetScrollMaxY and imgui.GetScrollY then
-                    local max_y = imgui.GetScrollMaxY()
-                    if max_y > 0 then
-                        sync_scroll_ratio = math.max(0.0, math.min(1.0, imgui.GetScrollY() / max_y))
-                        active_scroll_source = "preview"
-                    end
-                end
+            -- At the very END of SplitPreviewChild (before EndChild):
+            if imgui.GetScrollY and imgui.GetScrollMaxY then
+                preview_scroll_y = imgui.GetScrollY()
+                preview_scroll_max_y = imgui.GetScrollMaxY()
             end
 
             imgui.EndChild()
+        end
+
+        -- Two-Way Synchronized Scrolling Arbitration (Outside Both Child Panes)
+        local both_scrollable = sync_scroll_enabled and (editor_scroll_max_y > 0) and (preview_scroll_max_y > 0)
+        local sync_resumed = both_scrollable and not last_both_scrollable
+        last_both_scrollable = both_scrollable
+
+        if both_scrollable then
+            local p_y = pane_y or 0
+            local p_h = actual_pane_h or 500
+            local l_x = left_pane_x or 0
+            local l_w = left_pane_w or left_w
+            local r_x = right_pane_x or (l_x + l_w + splitter_w)
+            local r_w = right_pane_w or right_w
+
+            local editor_hovered  = is_mouse_in_rect(l_x, p_y, l_w, p_h)
+            local preview_hovered = is_mouse_in_rect(r_x, p_y, r_w, p_h)
+
+            -- 1. Catch-up alignment when Sync Scroll was just re-enabled:
+            if sync_scroll_just_enabled or sync_resumed then
+                sync_scroll_just_enabled = false
+                local r = math.max(0.0, math.min(1.0, editor_scroll_y / editor_scroll_max_y))
+                target_preview_scroll = r * preview_scroll_max_y
+
+            -- 2. Editor drives preview:
+            elseif editor_hovered and not preview_hovered then
+                if editor_scroll_y <= 4.0 then
+                    target_preview_scroll = 0.0 -- Snap to top
+                elseif editor_scroll_y >= (editor_scroll_max_y - 12.0) then
+                    target_preview_scroll = preview_scroll_max_y -- Snap to bottom
+                else
+                    local r = editor_scroll_y / editor_scroll_max_y
+                    target_preview_scroll = r * preview_scroll_max_y
+                end
+
+            -- 3. Preview drives editor:
+            elseif preview_hovered and not editor_hovered then
+                if preview_scroll_y <= 4.0 then
+                    target_editor_scroll = 0.0 -- Snap to top
+                elseif preview_scroll_y >= (preview_scroll_max_y - 4.0) then
+                    target_editor_scroll = editor_scroll_max_y -- Snap to bottom
+                else
+                    local r = preview_scroll_y / preview_scroll_max_y
+                    target_editor_scroll = r * editor_scroll_max_y
+                end
+            end
         end
     end
 
