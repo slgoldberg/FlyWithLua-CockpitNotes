@@ -1554,8 +1554,8 @@ local function md_editor_render_content()
             imgui.AlignTextToFramePadding()
             imgui.TextDisabled("RAW MARKDOWN SOURCE:")
 
-            -- Pinned right-aligned Auto-wrap checkbox (permanently visible!)
-            local wrap_w = 95
+            -- Pinned right-aligned Auto-wrap ToggleButton (permanently visible!)
+            local wrap_w = 105
             local cur_x = (imgui.GetCursorPosX and imgui.GetCursorPosX()) or 160
             local right_wrap_x = left_w - wrap_w - 15
             if right_wrap_x > cur_x + 10 then
@@ -1563,13 +1563,18 @@ local function md_editor_render_content()
             else
                 imgui.SameLine()
             end
-            local wrap_changed, new_wrap = imgui.Checkbox("Auto-wrap##opt_wrap", split.word_wrap)
+            local wrap_changed, new_wrap
+            if imgui.ToggleButton then
+                wrap_changed, new_wrap = imgui.ToggleButton("Auto-wrap##opt_wrap", split.word_wrap)
+            else
+                wrap_changed, new_wrap = imgui.Checkbox("Auto-wrap##opt_wrap", split.word_wrap)
+            end
             if wrap_changed then
                 split.word_wrap = new_wrap
                 editor_epoch = editor_epoch + 1
             end
             if imgui.IsItemHovered and imgui.IsItemHovered() then
-                show_tooltip("**Auto-wrap (Word Wrap)**\n\nWrap long lines soft to pane width.\nUncheck to allow horizontal scrolling.")
+                show_tooltip("**Auto-wrap (Word Wrap)**\n\nWrap long lines soft to pane width.\nClick or mouse-wheel to toggle on/off.\nUnchecked allows horizontal scrolling.")
             end
 
             imgui.Separator()
