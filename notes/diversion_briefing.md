@@ -18,37 +18,37 @@
 
 * **Airport Elevation:** `799 ft MSL` | **Bearing & Distance:** `085° Mag / 64 NM`
 * **Estimated Time Enroute (ETE):** `14 minutes` (High-speed descent profile)
-* **Approach Minima / DA:** <pill icon=avionics_beacon color=#3498db>999 ft MSL (200 ft AGL) / RVR 2400</pill>
+* **Approach Minima / DA:** <pill icon=plane color=#3498db>999 ft MSL (200 ft AGL) / RVR 2400</pill>
 
 ---
 
 ## Weather Minima & Runway Conditions
 * **Current METAR:** `KSBN 281854Z 31014G22KT 6SM -RA SCT018 OVC025 08/04 A2994`
 * **Surface Wind:** `310° @ 14 kt, gusts 22 kt`
-* **Braking Action:** GOOD (Runway wet, no standing water reported)
+* **Braking Action:** <icon green check /> GOOD (Runway wet, no standing water reported)
 
 ---
 
 ## Fuel Reserves & Bingo Status
 | State / Threshold | Fuel (lbs) | Endurance | Status |
 | :--- | :---: | :---: | :---: |
-| **FOB at Decision** | 7,600 | 01:35 | <pill icon=avionics_beacon color=#2ecc71>ONBOARD</pill> |
+| **FOB at Decision** | 7,600 | 01:35 | <pill icon=check color=#2ecc71>ONBOARD</pill> |
 | **Burn to Alternate** | 2,100 | 00:25 | Planned Burn |
-| **Estimated Touchdown FOB** | 5,500 | 01:10 | <badge icon=avionics_beacon green>SAFE</badge> |
+| **Estimated Touchdown FOB** | 5,500 | 01:10 | <badge icon=check green>SAFE</badge> |
 | **Final Legal Reserve** | 2,450 | 00:30 | Required |
-| **Usable Holding Margin** | +3,050 | +00:38 | <badge icon=avionics_beacon green>+38 min hold</badge> |
-| **Minimum Diversion Bingo** | 5,550 | — | <badge icon=avionics_beacon yellow>BINGO</badge> |
-| **Emergency Fuel Threshold** | 2,450 | — | <badge icon=avionics_beacon red>MAYDAY</badge> |
+| **Usable Holding Margin** | +3,050 | +00:38 | <badge icon=check green>+38 min hold</badge> |
+| **Minimum Diversion Bingo** | 5,550 | — | <badge icon=warning yellow>BINGO</badge> |
+| **Emergency Fuel Threshold** | 2,450 | — | <badge icon=warning red>MAYDAY</badge> |
 
 ---
 
 ## ATC & Cockpit Diversion Checklist
-- `[ ]` **Aviate:** Maintain positive aircraft control; turn toward alternate heading (`085°`)
-- `[ ]` **Declare Intentions:** Advise ATC ("Request diversion to alternate KSBN")
+- `[ ]` :plane: **Aviate:** Maintain positive aircraft control; turn toward alternate heading (`085°`)
+- `[ ]` :warning: **Declare Intentions:** Advise ATC ("Request diversion to alternate KSBN")
 - `[ ]` **Squawk & Fuel State:** State souls on board and fuel endurance to ATC if requested
 - `[ ]` **FMS Setup:** Select KSBN as active destination, insert ILS 27L approach
 - `[ ]` **Radios & Nav Aids:** Set NAV1 `109.90`, course `274°`, monitor ATIS `120.675`
 - `[ ]` **Landing Performance:** Recalculate landing distance, verify VREF and VAPP
 - `[ ]` **Cabin Crew Notification:** Brief flight attendants (NITS briefing: Nature, Intention, Time, Special)
 - `[ ]` **Passenger PA:** Deliver calm, informative diversion announcement
-- `[ ]` **Approach & Landing Checklist:** Completed before initial approach fix
+- `[ ]` :check: **Approach & Landing Checklist:** Completed before initial approach fix

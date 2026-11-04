@@ -11,13 +11,13 @@
 ## Weight & Balance Limits
 | Parameter | Planned (lbs) | Max Limit (lbs) | Margin | Status |
 | :--- | :---: | :---: | :---: | :---: |
-| **OEW** (Operating Empty) | 91,300 | — | — | <badge icon=avionics_beacon green>OK</badge> |
-| **Payload** (Pax + Cargo) | 35,400 | 43,000 | +7,600 | <badge icon=avionics_beacon green>OK</badge> |
-| **ZFW** (Zero Fuel Weight) | 126,700 | 138,300 | +11,600 | <badge icon=avionics_beacon green>+11,600 lbs</badge> |
-| **TOW** (Takeoff Weight) | 145,500 | 174,200 | +28,700 | <badge icon=avionics_beacon green>+28,700 lbs</badge> |
-| **ELW** (Landing Weight) | 136,100 | 146,300 | +10,200 | <badge icon=avionics_beacon green>+10,200 lbs</badge> |
+| **OEW** (Operating Empty) | 91,300 | — | — | <badge icon=check green>OK</badge> |
+| **Payload** (Pax + Cargo) | 35,400 | 43,000 | +7,600 | <badge icon=check green>OK</badge> |
+| **ZFW** (Zero Fuel Weight) | 126,700 | 138,300 | +11,600 | <badge icon=check green>+11,600 lbs</badge> |
+| **TOW** (Takeoff Weight) | 145,500 | 174,200 | +28,700 | <badge icon=check green>+28,700 lbs</badge> |
+| **ELW** (Landing Weight) | 136,100 | 146,300 | +10,200 | <badge icon=check green>+10,200 lbs</badge> |
 
-* **Center of Gravity (CG):** `21.4% MAC` | **Takeoff Trim:** <pill icon=avionics_beacon color=#2ecc71>5.2 ANU</pill>
+* **Center of Gravity (CG):** `21.4% MAC` | **Takeoff Trim:** <pill icon=check color=#2ecc71>5.2 ANU</pill>
 
 ---
 
@@ -36,16 +36,16 @@
 ### Fuel Thresholds & Bingo State
 | Threshold | Quantity | Indicator | Required Action |
 | :--- | :---: | :---: | :--- |
-| **Ramp / Block Fuel** | 18,800 lbs | <pill icon=avionics_beacon color=#2ecc71>NORMAL</pill> | Totalizer verified against uplift receipt |
-| **Min Takeoff Fuel** | 18,000 lbs | <pill icon=avionics_beacon color=#2ecc71>NORMAL</pill> | Abort takeoff if below threshold |
-| **Diversion Bingo** | 5,550 lbs | <badge icon=avionics_beacon yellow>BINGO</badge> | Divert immediately to KSBN alternate |
-| **Emergency Fuel** | 2,450 lbs | <badge icon=avionics_beacon red>MAYDAY</badge> | Declare "Mayday Fuel" with ATC |
+| **Ramp / Block Fuel** | 18,800 lbs | <pill icon=check color=#2ecc71>NORMAL</pill> | Totalizer verified against uplift receipt |
+| **Min Takeoff Fuel** | 18,000 lbs | <pill icon=check color=#2ecc71>NORMAL</pill> | Abort takeoff if below threshold |
+| **Diversion Bingo** | 5,550 lbs | <badge icon=warning yellow>BINGO</badge> | Divert immediately to KSBN alternate |
+| **Emergency Fuel** | 2,450 lbs | <badge icon=warning red>MAYDAY</badge> | Declare "Mayday Fuel" with ATC |
 
 ---
 
 ### Pre-Departure Verification Checklist
-- `[ ]` Totalizer gauge verified against fuel uplift receipt (`18,800 lbs`)
-- `[ ]` Cross-feed valve tested and set closed
+- `[ ]` :check: Totalizer gauge verified against fuel uplift receipt (`18,800 lbs`)
+- `[ ]` :warning: Cross-feed valve tested and set closed
 - `[ ]` FMC PERF INIT entered: ZFW `126.7`, Reserves `5.5`, Cost Index `28`
 - `[ ]` Takeoff stabilizer trim `5.2 ANU` dialed & confirmed in green band
 - `[ ]` Takeoff V-Speeds calculated for runway length & condition

@@ -9,18 +9,18 @@
 ---
 
 ## Flight Deck Status & Automation
-* **Autopilot Mode:** <pill icon=avionics_beacon color=#3498db>NAV / ALT</pill>
-* **Transponder Mode:** <pill icon=avionics_beacon color=#2ecc71>ALT (Mode C)</pill>
-* **Pitot & Anti-Ice:** <pill icon=avionics_beacon orange>ON</pill>
-* **Master Warning:** <pill icon=avionics_beacon color=#e74c3c />
-* **TCAS Surveillance:** <badge icon=avionics_beacon>TA/RA</badge>
+* **Autopilot Mode:** <pill icon=plane color=#3498db>NAV / ALT</pill>
+* **Transponder Mode:** <pill icon=check color=#2ecc71>ALT (Mode C)</pill>
+* **Pitot & Anti-Ice:** <pill icon=warning orange>ON</pill>
+* **Master Warning:** <pill icon=warning color=#e74c3c />
+* **TCAS Surveillance:** <badge icon=plane>TA/RA</badge>
 
 ---
 
 ## Communication & Nav Frequencies
 | Station / Service | Facility | Frequency | Status |
 | :--- | :--- | :---: | :---: |
-| **ORD ATIS** | Arrival / Departure | 135.400 | <badge icon=avionics_beacon green>ACTIVE</badge> |
+| **ORD ATIS** | Arrival / Departure | 135.400 | <badge icon=check green>ACTIVE</badge> |
 | **ORD Clearance** | Pre-Taxi Clearance | 121.150 | Monitored |
 | **ORD Ground** | Metering / North Ground | 124.125 | Standby |
 | **ORD Tower** | Local Control (28R) | 120.750 | Standby |
@@ -33,18 +33,18 @@
 ## Waypoint Navigation Log
 | Fix / Waypoint | Airway | Course | Leg (NM) | Rem (NM) | Altitude | Est Fuel (lbs) | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **KORD** | — | — | 0 | 334 | Field | 18,800 | <badge icon=avionics_beacon green>DEP</badge> |
-| **JOT** (Joliet VOR) | DCT | 215° | 28 | 306 | 5,000 | 17,900 | <pill icon=avionics_beacon color=#2ecc71>CLIMB</pill> |
-| **BAE** (Badger VOR) | V100 | 322° | 64 | 242 | FL240 | 16,100 | <pill icon=avionics_beacon color=#2ecc71>CLIMB</pill> |
-| **DLL** (Dells VOR) | V100 | 305° | 78 | 164 | FL340 | 14,800 | <pill icon=avionics_beacon color=#3498db>CRUISE</pill> |
-| **ALTRN** (Waypoint) | Direct | 296° | 92 | 72 | FL340 | 12,600 | <pill icon=avionics_beacon color=#3498db>CRUISE</pill> |
-| **KMSP** (Destination)| Direct | 298° | 72 | 0 | Field | 9,400 | <badge icon=avionics_beacon yellow>ARR</badge> |
+| **KORD** | — | — | 0 | 334 | Field | 18,800 | <badge icon=plane green>DEP</badge> |
+| **JOT** (Joliet VOR) | DCT | 215° | 28 | 306 | 5,000 | 17,900 | <pill icon=check color=#2ecc71>CLIMB</pill> |
+| **BAE** (Badger VOR) | V100 | 322° | 64 | 242 | FL240 | 16,100 | <pill icon=check color=#2ecc71>CLIMB</pill> |
+| **DLL** (Dells VOR) | V100 | 305° | 78 | 164 | FL340 | 14,800 | <pill icon=plane color=#3498db>CRUISE</pill> |
+| **ALTRN** (Waypoint) | Direct | 296° | 92 | 72 | FL340 | 12,600 | <pill icon=plane color=#3498db>CRUISE</pill> |
+| **KMSP** (Destination)| Direct | 298° | 72 | 0 | Field | 9,400 | <badge icon=plane yellow>ARR</badge> |
 
 ---
 
 ## In-Flight Verification Checklist
-- `[ ]` Altimeter reset to standard (29.92 / 1013 hPa) passing 18,000 ft (FL180)
-- `[ ]` Top of Climb fuel check verified against flight plan burn
-- `[ ]` Minneapolis ATIS copied (Wind, Runway in use, Altimeter)
+- `[ ]` :check: Altimeter reset to standard (29.92 / 1013 hPa) passing 18,000 ft (FL180)
+- `[ ]` :plane: Top of Climb fuel check verified against flight plan burn
+- `[ ]` :warning: Minneapolis ATIS copied (Wind, Runway in use, Altimeter)
 - `[ ]` Top of Descent calculated: 3x altitude loss rule + 10 NM margin
 - `[ ]` Approach briefed: ILS 30R DA `1,041 ft MSL`, missed approach altitude `4,000 ft`

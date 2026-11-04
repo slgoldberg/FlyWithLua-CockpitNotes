@@ -40,7 +40,7 @@ KMSP 281853Z 33018G26KT 4SM -SN BLSN BKN015 OVC030 M02/M06 A2988 RMK AO2
 * **Ceiling & Sky:** `Broken 1,500 ft AGL (Ceiling), Overcast 3,000 ft AGL`
 * **Temperature / Dew Point:** `-02°C / -06°C`
 * **Altimeter (QNH):** <pill blue>29.88 inHg (1012 hPa)</pill>
-* **Surface Condition:** Contaminated runway; braking action Medium
+* **Surface Condition:** <icon orange warning /> Contaminated runway; braking action Medium
 
 ---
 
@@ -58,7 +58,7 @@ TAF KMSP 281720Z 2818/2924 34016G24KT 4SM -SN BKN018 OVC035
 ---
 
 ## Weather Verification Checklist
-- `[ ]` Destination altimeter copied: `29.88 inHg`
-- `[ ]` Engine & wing anti-ice requirements briefed for descent into freezing clouds
-- `[ ]` Approach category and minima briefed for ILS 30L/30R
+- `[ ]` :check: Destination altimeter copied: `29.88 inHg`
+- `[ ]` :warning: Engine & wing anti-ice requirements briefed for descent into freezing clouds
+- `[ ]` :check: Approach category and minima briefed for ILS 30L/30R
 - `[ ]` Cold temperature altitude corrections applied if airport temp < 0°C

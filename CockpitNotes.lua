@@ -88,10 +88,6 @@ local should_scroll_to_bottom = false -- Auto-scroll flag triggered on Quick Act
 local active_scroll_source    = nil   -- "editor" or "preview" for two-way scroll synchronization
 local sync_scroll_ratio       = 0.0   -- Proportional scroll ratio (0.0 to 1.0)
 
--- Icon / Glyph configuration for Quick Actions button
--- Set to "^" for ASCII compatibility; easily substituted with ICON_FA_CHEVRON_UP in future
-local QUICK_ACTIONS_ICON      = "^"
-
 -- ----------------------------------------------------------------------------
 -- File Persistence & In-Cockpit File Dialogs (Turnkey ImgWindow File Suite)
 -- ----------------------------------------------------------------------------
@@ -161,22 +157,28 @@ Welcome to your in-cockpit **FlyWithLua Markdown Editor**!
 * **Live Formatting:** Headers, **bold**, *italic*, <u>underline</u>, and ~~strikethrough~~.
 * **Interactive GFM Tables:** Markdown tables support drag-resizable column dividers and column sorting.
 * **Async Remote Badges:** Syntax like `![Badge](https://img.shields.io/...)` loads smoothly in the background.
-* **Avionics Annunciators:** <pill icon=avionics_beacon color=#3498db>NAV / ALT</pill> <pill icon=avionics_beacon color=#2ecc71>ALT (Mode C)</pill> <pill icon=avionics_beacon orange>PITOT ON</pill> <pill icon=avionics_beacon color=#e74c3c />
+* **Procedural Vector Icons:** Zero-font, DPI-scaled procedural vector icons:
+  * HTML Tags: `<icon blue plane />` Flight Enroute, `<icon green check />` Verified, `<icon orange warning />` Caution
+  * Emoji Shortcodes: `:plane:` Route, `:check:` Verified, `:warning:` Advisory
+  * Raw-Fallback Macro: `#[^](ICON_CARET_UP)` Pitch Up, `#[↺](ICON_UNDO)` Reset
+  * Rescued Raw Unicode: `↺` Reset, `↻` Restore, `▲` Up, `▼` Down, `✓` Check, `⚠` Warning
+* **Avionics Annunciators:** <pill icon=plane color=#3498db>NAV / ALT</pill> <pill icon=check color=#2ecc71>ALT (Mode C)</pill> <pill icon=warning orange>PITOT ON</pill> <pill icon=warning color=#e74c3c />
 * **Keycaps & Shortcuts:** Press <kbd>Alt+F4</kbd> or <kbd>Ctrl+Shift+P</kbd>
 * **Dual-Bracket Hyperlinks:** [FlyWithLua Documentation](https://github.com/sparker256/FlyWithLua) or {Cockpit Notes}(https://github.com/slgoldberg/FlyWithLua-CockpitNotes)
 
 ### Flight Plan Waypoint Sample
 | Fix / Point | Altitude | Distance | Fuel Rem | Status |
 | :--- | :---: | :---: | :---: | :---: |
-| **KORD** (Dep) | Field | 0 NM | 18,800 lbs | <badge icon=avionics_beacon green>DEPARTED</badge> |
-| **JOT** (VOR) | 5,000 | 28 NM | 17,900 lbs | <pill icon=avionics_beacon color=#2ecc71>CLIMB</pill> |
-| **DLL** (VOR) | FL340 | 142 NM | 14,800 lbs | <pill icon=avionics_beacon color=#3498db>CRUISE</pill> |
-| **KMSP** (Dest) | Field | 334 NM | 9,400 lbs | <badge icon=avionics_beacon yellow>PLANNED</badge> |
+| **KORD** (Dep) | Field | 0 NM | 18,800 lbs | <badge icon=plane green>DEPARTED</badge> |
+| **JOT** (VOR) | 5,000 | 28 NM | 17,900 lbs | <pill icon=check color=#2ecc71>CLIMB</pill> |
+| **DLL** (VOR) | FL340 | 142 NM | 14,800 lbs | <pill icon=plane color=#3498db>CRUISE</pill> |
+| **KMSP** (Dest) | Field | 334 NM | 9,400 lbs | <badge icon=plane yellow>PLANNED</badge> |
 
 ### Cockpit Checklist
-- `[x]` Pre-flight briefing complete
-- `[x]` Altimeter set to standard: `29.92 inHg`
-- `[ ]` Clearance copied and read back
+- `[x]` <icon green check /> Pre-flight briefing complete
+- `[x]` <icon green check /> Altimeter set to standard: `29.92 inHg`
+- `[ ]` :warning: Clearance copied and read back
+- `[ ]` #[^](ICON_CARET_UP) Departure runway confirmed
 
 <pill blue>TIP</pill> Use the **Mode** buttons above to switch between pure Editor, Split View, and full-screen Preview.
 ]]
@@ -192,7 +194,7 @@ An interactive in-cockpit Markdown scratchpad and flight notes system for X-Plan
 ### Key Capabilities
 * **Interactive GFM Tables:** Standard GitHub Flavored Markdown tables (`| Col 1 | Col 2 |`) with drag-resizable column dividers, right-border table width adjustment, and column sorting.
 * **Async Remote Images & Badges:** Non-blocking background worker threads for `![Badge](https://img.shields.io/...)` badges and online diagrams without sim frame drops.
-* **Embedded Vector Icons & Annunciators:** Live annunciator capsules with embedded vector icons (`<pill icon=avionics_beacon>...</pill>`) and unary status lights (`<pill icon=avionics_beacon color=#e74c3c />`).
+* **Procedural Vector Icons & Annunciators:** Native zero-font vector icons (`<icon blue plane />`, `:check:`, `#[^](ICON_CARET_UP)`, `↺`, `▲`) and live annunciator capsules (`<pill icon=plane>...</pill>`).
 * **Zero-Scroll-Leak Pulldowns:** Non-capturing `imgui.SelectPulldown` lets you browse templates without stealing mouse-wheel scroll from your notes.
 * **Directional Blossoming Popups:** Quick action menus blossom upward (`PopupAnchor.AboveItem`) from the bottom status bar without spilling off the screen.
 * **Live Markdown Typography:** Headers (`#`, `##`), **bold**, *italic*, <u>underline</u>, ~~strikethrough~~, bulleted lists, and formatted code blocks with syntax styling.
@@ -258,38 +260,39 @@ local MAX_TEXT_BYTES = 65536
 -- Aviation Templates
 -- ----------------------------------------------------------------------------
 local templates = {
-    ["ATIS Copy Pad"] = [[# ATIS Information [ALPHA]
+    ["ATIS Copy Pad"] = [[# ATIS Information [ALPHA] <icon blue plane />
 * **Airport:** `KORD (Chicago O'Hare)` | **Time:** `1851Z`
 * **Wind:** `280° @ 12kt G18kt` | **Visibility:** `10 SM`
 * **Sky Condition:** `FEW 045, SCT 250`
 * **Temp / Dew Point:** `18°C / 08°C`
 * **Altimeter:** `30.12 inHg`
 * **Landing / Departing:** `Runway 28C, 28R`
-* **NOTAMs:** Taxiway Bravo closed between B4 and B6
+* **NOTAMs:** <icon orange warning /> Taxiway Bravo closed between B4 and B6
 ]],
 
     ["IFR Clearance (CRAFT)"] = [[# IFR Clearance Briefing
 * **C - Clearance Limit:** `Cleared to KMSP via JOT2 departure`
 * **R - Route:** `JOT VORD V100 BAE DLL ALTRN`
-* **A - Initial Altitude:** `Maintain 5,000 ft, expect FL330 in 10 minutes`
+* **A - Initial Altitude:** `Maintain 5,000 ft, expect FL330 in 10 minutes` #[▲](ICON_CARET_UP)
 * **F - Departure Frequency:** `120.40 MHz`
 * **T - Transponder (Squawk):** <kbd>4217</kbd>
 
 ---
-- `[ ]` Readback verified and accepted by ATC
-- `[ ]` Squawk set in Transponder
-- `[ ]` Initial altitude armed on MCP
+- `[ ]` :check: Readback verified and accepted by ATC
+- `[ ]` :check: Squawk set in Transponder
+- `[ ]` :check: Initial altitude armed on MCP
 ]],
 
     ["Pre-Flight Checklist"] = [[# Cockpit Pre-Flight Checklist
-- `[ ]` Weather & NOTAM briefing reviewed
-- `[ ]` Fuel onboard verified: `14,200 lbs`
-- `[ ]` Weight & Balance computed (CG within envelope)
-- `[ ]` FMS flight plan & waypoints cross-checked
-- `[ ]` Altimeters cross-checked & set: `29.92`
-- `[ ]` V-Speeds calculated: `V1: 138`, `VR: 144`, `V2: 151`
-- `[ ]` Transponder: <pill green>ALT / 1200</pill>
-- `[ ]` Thrust reversers checked: <badge green>ARMED</badge>
+- `[ ]` :check: Weather & NOTAM briefing reviewed
+- `[ ]` :check: Fuel onboard verified: `14,200 lbs`
+- `[ ]` :check: Weight & Balance computed (CG within envelope)
+- `[ ]` :check: FMS flight plan & waypoints cross-checked
+- `[ ]` :check: Altimeters cross-checked & set: `29.92`
+- `[ ]` :check: V-Speeds calculated: `V1: 138`, `VR: 144`, `V2: 151`
+- `[ ]` Transponder: <pill icon=check green>ALT / 1200</pill>
+- `[ ]` Thrust reversers checked: <badge icon=check green>ARMED</badge>
+- `[ ]` Pitot Heat: <pill icon=warning orange>CHECKED</pill>
 ]],
 
     ["IFR Navigation Log (NavLog)"] = [[# IFR Navigation Log & Route Plan
@@ -303,18 +306,18 @@ local templates = {
 ---
 
 ## Flight Deck Status & Automation
-* **Autopilot Mode:** <pill icon=avionics_beacon color=#3498db>NAV / ALT</pill>
-* **Transponder Mode:** <pill icon=avionics_beacon color=#2ecc71>ALT (Mode C)</pill>
-* **Pitot & Anti-Ice:** <pill icon=avionics_beacon orange>ON</pill>
-* **Master Warning:** <pill icon=avionics_beacon color=#e74c3c />
-* **TCAS Surveillance:** <badge icon=avionics_beacon>TA/RA</badge>
+* **Autopilot Mode:** <pill icon=plane color=#3498db>NAV / ALT</pill>
+* **Transponder Mode:** <pill icon=check color=#2ecc71>ALT (Mode C)</pill>
+* **Pitot & Anti-Ice:** <pill icon=warning orange>ON</pill>
+* **Master Warning:** <pill icon=warning color=#e74c3c />
+* **TCAS Surveillance:** <badge icon=plane>TA/RA</badge>
 
 ---
 
 ## Communication & Nav Frequencies
 | Station / Service | Facility | Frequency | Status |
 | :--- | :--- | :---: | :---: |
-| **ORD ATIS** | Arrival / Departure | 135.400 | <badge icon=avionics_beacon green>ACTIVE</badge> |
+| **ORD ATIS** | Arrival / Departure | 135.400 | <badge icon=check green>ACTIVE</badge> |
 | **ORD Clearance** | Pre-Taxi Clearance | 121.150 | Monitored |
 | **ORD Ground** | Metering / North Ground | 124.125 | Standby |
 | **ORD Tower** | Local Control (28R) | 120.750 | Standby |
@@ -327,19 +330,19 @@ local templates = {
 ## Waypoint Navigation Log
 | Fix / Waypoint | Airway | Course | Leg (NM) | Rem (NM) | Altitude | Est Fuel (lbs) | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **KORD** | — | — | 0 | 334 | Field | 18,800 | <badge icon=avionics_beacon green>DEP</badge> |
-| **JOT** (Joliet VOR) | DCT | 215° | 28 | 306 | 5,000 | 17,900 | <pill icon=avionics_beacon color=#2ecc71>CLIMB</pill> |
-| **BAE** (Badger VOR) | V100 | 322° | 64 | 242 | FL240 | 16,100 | <pill icon=avionics_beacon color=#2ecc71>CLIMB</pill> |
-| **DLL** (Dells VOR) | V100 | 305° | 78 | 164 | FL340 | 14,800 | <pill icon=avionics_beacon color=#3498db>CRUISE</pill> |
-| **ALTRN** (Waypoint) | Direct | 296° | 92 | 72 | FL340 | 12,600 | <pill icon=avionics_beacon color=#3498db>CRUISE</pill> |
-| **KMSP** (Destination)| Direct | 298° | 72 | 0 | Field | 9,400 | <badge icon=avionics_beacon yellow>ARR</badge> |
+| **KORD** | — | — | 0 | 334 | Field | 18,800 | <badge icon=plane green>DEP</badge> |
+| **JOT** (Joliet VOR) | DCT | 215° | 28 | 306 | 5,000 | 17,900 | <pill icon=check color=#2ecc71>CLIMB</pill> |
+| **BAE** (Badger VOR) | V100 | 322° | 64 | 242 | FL240 | 16,100 | <pill icon=check color=#2ecc71>CLIMB</pill> |
+| **DLL** (Dells VOR) | V100 | 305° | 78 | 164 | FL340 | 14,800 | <pill icon=plane color=#3498db>CRUISE</pill> |
+| **ALTRN** (Waypoint) | Direct | 296° | 92 | 72 | FL340 | 12,600 | <pill icon=plane color=#3498db>CRUISE</pill> |
+| **KMSP** (Destination)| Direct | 298° | 72 | 0 | Field | 9,400 | <badge icon=plane yellow>ARR</badge> |
 
 ---
 
 ## In-Flight Verification Checklist
-- `[ ]` Altimeter reset to standard (29.92 / 1013 hPa) passing 18,000 ft (FL180)
-- `[ ]` Top of Climb fuel check verified against flight plan burn
-- `[ ]` Minneapolis ATIS copied (Wind, Runway in use, Altimeter)
+- `[ ]` :check: Altimeter reset to standard (29.92 / 1013 hPa) passing 18,000 ft (FL180)
+- `[ ]` :plane: Top of Climb fuel check verified against flight plan burn
+- `[ ]` :warning: Minneapolis ATIS copied (Wind, Runway in use, Altimeter)
 - `[ ]` Top of Descent calculated: 3x altitude loss rule + 10 NM margin
 - `[ ]` Approach briefed: ILS 30R DA `1,041 ft MSL`, missed approach altitude `4,000 ft`
 ]],
@@ -357,13 +360,13 @@ local templates = {
 ## Weight & Balance Limits
 | Parameter | Planned (lbs) | Max Limit (lbs) | Margin | Status |
 | :--- | :---: | :---: | :---: | :---: |
-| **OEW** (Operating Empty) | 91,300 | — | — | <badge icon=avionics_beacon green>OK</badge> |
-| **Payload** (Pax + Cargo) | 35,400 | 43,000 | +7,600 | <badge icon=avionics_beacon green>OK</badge> |
-| **ZFW** (Zero Fuel Weight) | 126,700 | 138,300 | +11,600 | <badge icon=avionics_beacon green>+11,600 lbs</badge> |
-| **TOW** (Takeoff Weight) | 145,500 | 174,200 | +28,700 | <badge icon=avionics_beacon green>+28,700 lbs</badge> |
-| **ELW** (Landing Weight) | 136,100 | 146,300 | +10,200 | <badge icon=avionics_beacon green>+10,200 lbs</badge> |
+| **OEW** (Operating Empty) | 91,300 | — | — | <badge icon=check green>OK</badge> |
+| **Payload** (Pax + Cargo) | 35,400 | 43,000 | +7,600 | <badge icon=check green>OK</badge> |
+| **ZFW** (Zero Fuel Weight) | 126,700 | 138,300 | +11,600 | <badge icon=check green>+11,600 lbs</badge> |
+| **TOW** (Takeoff Weight) | 145,500 | 174,200 | +28,700 | <badge icon=check green>+28,700 lbs</badge> |
+| **ELW** (Landing Weight) | 136,100 | 146,300 | +10,200 | <badge icon=check green>+10,200 lbs</badge> |
 
-* **Center of Gravity (CG):** `21.4% MAC` | **Takeoff Trim:** <pill icon=avionics_beacon color=#2ecc71>5.2 ANU</pill>
+* **Center of Gravity (CG):** `21.4% MAC` | **Takeoff Trim:** <pill icon=check color=#2ecc71>5.2 ANU</pill>
 
 ---
 
@@ -382,16 +385,16 @@ local templates = {
 ### Fuel Thresholds & Bingo State
 | Threshold | Quantity | Indicator | Required Action |
 | :--- | :---: | :---: | :--- |
-| **Ramp / Block Fuel** | 18,800 lbs | <pill icon=avionics_beacon color=#2ecc71>NORMAL</pill> | Totalizer verified against uplift receipt |
-| **Min Takeoff Fuel** | 18,000 lbs | <pill icon=avionics_beacon color=#2ecc71>NORMAL</pill> | Abort takeoff if below threshold |
-| **Diversion Bingo** | 5,550 lbs | <badge icon=avionics_beacon yellow>BINGO</badge> | Divert immediately to KSBN alternate |
-| **Emergency Fuel** | 2,450 lbs | <badge icon=avionics_beacon red>MAYDAY</badge> | Declare "Mayday Fuel" with ATC |
+| **Ramp / Block Fuel** | 18,800 lbs | <pill icon=check color=#2ecc71>NORMAL</pill> | Totalizer verified against uplift receipt |
+| **Min Takeoff Fuel** | 18,000 lbs | <pill icon=check color=#2ecc71>NORMAL</pill> | Abort takeoff if below threshold |
+| **Diversion Bingo** | 5,550 lbs | <badge icon=warning yellow>BINGO</badge> | Divert immediately to KSBN alternate |
+| **Emergency Fuel** | 2,450 lbs | <badge icon=warning red>MAYDAY</badge> | Declare "Mayday Fuel" with ATC |
 
 ---
 
 ### Pre-Departure Verification Checklist
-- `[ ]` Totalizer gauge verified against fuel uplift receipt (`18,800 lbs`)
-- `[ ]` Cross-feed valve tested and set closed
+- `[ ]` :check: Totalizer gauge verified against fuel uplift receipt (`18,800 lbs`)
+- `[ ]` :warning: Cross-feed valve tested and set closed
 - `[ ]` FMC PERF INIT entered: ZFW `126.7`, Reserves `5.5`, Cost Index `28`
 - `[ ]` Takeoff stabilizer trim `5.2 ANU` dialed & confirmed in green band
 - `[ ]` Takeoff V-Speeds calculated for runway length & condition
@@ -417,40 +420,40 @@ local templates = {
 
 * **Airport Elevation:** `799 ft MSL` | **Bearing & Distance:** `085° Mag / 64 NM`
 * **Estimated Time Enroute (ETE):** `14 minutes` (High-speed descent profile)
-* **Approach Minima / DA:** <pill icon=avionics_beacon color=#3498db>999 ft MSL (200 ft AGL) / RVR 2400</pill>
+* **Approach Minima / DA:** <pill icon=plane color=#3498db>999 ft MSL (200 ft AGL) / RVR 2400</pill>
 
 ---
 
 ## Weather Minima & Runway Conditions
 * **Current METAR:** `KSBN 281854Z 31014G22KT 6SM -RA SCT018 OVC025 08/04 A2994`
 * **Surface Wind:** `310° @ 14 kt, gusts 22 kt`
-* **Braking Action:** GOOD (Runway wet, no standing water reported)
+* **Braking Action:** <icon green check /> GOOD (Runway wet, no standing water reported)
 
 ---
 
 ## Fuel Reserves & Bingo Status
 | State / Threshold | Fuel (lbs) | Endurance | Status |
 | :--- | :---: | :---: | :---: |
-| **FOB at Decision** | 7,600 | 01:35 | <pill icon=avionics_beacon color=#2ecc71>ONBOARD</pill> |
+| **FOB at Decision** | 7,600 | 01:35 | <pill icon=check color=#2ecc71>ONBOARD</pill> |
 | **Burn to Alternate** | 2,100 | 00:25 | Planned Burn |
-| **Estimated Touchdown FOB** | 5,500 | 01:10 | <badge icon=avionics_beacon green>SAFE</badge> |
+| **Estimated Touchdown FOB** | 5,500 | 01:10 | <badge icon=check green>SAFE</badge> |
 | **Final Legal Reserve** | 2,450 | 00:30 | Required |
-| **Usable Holding Margin** | +3,050 | +00:38 | <badge icon=avionics_beacon green>+38 min hold</badge> |
-| **Minimum Diversion Bingo** | 5,550 | — | <badge icon=avionics_beacon yellow>BINGO</badge> |
-| **Emergency Fuel Threshold** | 2,450 | — | <badge icon=avionics_beacon red>MAYDAY</badge> |
+| **Usable Holding Margin** | +3,050 | +00:38 | <badge icon=check green>+38 min hold</badge> |
+| **Minimum Diversion Bingo** | 5,550 | — | <badge icon=warning yellow>BINGO</badge> |
+| **Emergency Fuel Threshold** | 2,450 | — | <badge icon=warning red>MAYDAY</badge> |
 
 ---
 
 ## ATC & Cockpit Diversion Checklist
-- `[ ]` **Aviate:** Maintain positive aircraft control; turn toward alternate heading (`085°`)
-- `[ ]` **Declare Intentions:** Advise ATC ("Request diversion to alternate KSBN")
+- `[ ]` :plane: **Aviate:** Maintain positive aircraft control; turn toward alternate heading (`085°`)
+- `[ ]` :warning: **Declare Intentions:** Advise ATC ("Request diversion to alternate KSBN")
 - `[ ]` **Squawk & Fuel State:** State souls on board and fuel endurance to ATC if requested
 - `[ ]` **FMS Setup:** Select KSBN as active destination, insert ILS 27L approach
 - `[ ]` **Radios & Nav Aids:** Set NAV1 `109.90`, course `274°`, monitor ATIS `120.675`
 - `[ ]` **Landing Performance:** Recalculate landing distance, verify VREF and VAPP
 - `[ ]` **Cabin Crew Notification:** Brief flight attendants (NITS briefing: Nature, Intention, Time, Special)
 - `[ ]` **Passenger PA:** Deliver calm, informative diversion announcement
-- `[ ]` **Approach & Landing Checklist:** Completed before initial approach fix
+- `[ ]` :check: **Approach & Landing Checklist:** Completed before initial approach fix
 ]],
 
     ["METAR / TAF Scratchpad"] = [[# METAR & TAF Weather Scratchpad
@@ -495,7 +498,7 @@ KMSP 281853Z 33018G26KT 4SM -SN BLSN BKN015 OVC030 M02/M06 A2988 RMK AO2
 * **Ceiling & Sky:** `Broken 1,500 ft AGL (Ceiling), Overcast 3,000 ft AGL`
 * **Temperature / Dew Point:** `-02°C / -06°C`
 * **Altimeter (QNH):** <pill blue>29.88 inHg (1012 hPa)</pill>
-* **Surface Condition:** Contaminated runway; braking action Medium
+* **Surface Condition:** <icon orange warning /> Contaminated runway; braking action Medium
 
 ---
 
@@ -513,9 +516,9 @@ TAF KMSP 281720Z 2818/2924 34016G24KT 4SM -SN BKN018 OVC035
 ---
 
 ## Weather Verification Checklist
-- `[ ]` Destination altimeter copied: `29.88 inHg`
-- `[ ]` Engine & wing anti-ice requirements briefed for descent into freezing clouds
-- `[ ]` Approach category and minima briefed for ILS 30L/30R
+- `[ ]` :check: Destination altimeter copied: `29.88 inHg`
+- `[ ]` :warning: Engine & wing anti-ice requirements briefed for descent into freezing clouds
+- `[ ]` :check: Approach category and minima briefed for ILS 30L/30R
 - `[ ]` Cold temperature altitude corrections applied if airport temp < 0°C
 ]],
 
@@ -924,8 +927,7 @@ local function render_bottom_status_bar(avail_w)
     imgui.TextDisabled(status_str)
 
     -- Right-aligned Quick Actions button
-    local btn_icon = (QUICK_ACTIONS_ICON and #QUICK_ACTIONS_ICON > 0) and (" " .. QUICK_ACTIONS_ICON) or ""
-    local btn_label = string.format("Quick Actions%s##btnQuickActions", btn_icon)
+    local btn_label = "Quick Actions <icon caret-up />##btnQuickActions"
     local btn_w = 145
     local win_w = (imgui.GetWindowWidth and imgui.GetWindowWidth()) or avail_w
     local right_x = win_w - btn_w - 20
@@ -936,7 +938,16 @@ local function render_bottom_status_bar(avail_w)
         imgui.SameLine()
     end
 
-    if imgui.Button and imgui.Button(btn_label, btn_w, 20) then
+    local btn_clicked = false
+    if imgui.MD and imgui.MD.ButtonMD then
+        btn_clicked = imgui.MD.ButtonMD(btn_label)
+    elseif imgui.ButtonMD then
+        btn_clicked = imgui.ButtonMD(btn_label)
+    elseif imgui.Button then
+        btn_clicked = imgui.Button("Quick Actions ^##btnQuickActions", btn_w, 20)
+    end
+
+    if btn_clicked then
         if imgui.OpenPopupAtItem then
             imgui.OpenPopupAtItem("##QuickActionsPopup",
                 (imgui.PopupAnchor and imgui.PopupAnchor.AboveItem) or 1,
@@ -945,7 +956,7 @@ local function render_bottom_status_bar(avail_w)
             imgui.OpenPopup("##QuickActionsPopup")
         end
     end
-    show_tooltip("**Quick Actions & Flight Deck Snippets**\n\nOpens upward from the status bar to quickly insert:\n* Aviation scratchpads & checklists\n* Annunciator status capsules\n* Master warning indicators\n* Markdown tables and checklists")
+    show_tooltip("**Quick Actions & Flight Deck Snippets**\n\nOpens upward from the status bar to quickly insert:\n* Aviation scratchpads & checklists\n* Annunciator status capsules\n* Procedural vector icons (`<icon ...>`, `:plane:`, `#[^](ICON_CARET_UP)`)\n* Markdown tables and checklists")
 
     -- Blossoming anchored popup (AboveItem, Right aligned)
     local is_open = false
@@ -978,15 +989,27 @@ local function render_bottom_status_bar(avail_w)
         end
         imgui.Separator()
         if imgui.MenuItem("Insert NavLog Row") then
-            wrap_or_insert("| **FIX** | Direct | 000° | 0 | 0 | FL000 | 0,000 | <pill icon=avionics_beacon color=#3498db>CRUISE</pill> |\n", "", "")
+            wrap_or_insert("| **FIX** | Direct | 000° | 0 | 0 | FL000 | 0,000 | <pill icon=plane color=#3498db>CRUISE</pill> |\n", "", "")
             should_scroll_to_bottom = true
         end
         if imgui.MenuItem("Insert Annunciator Pill") then
-            wrap_or_insert("<pill icon=avionics_beacon color=#3498db>NAV / ALT</pill>", "", "")
+            wrap_or_insert("<pill icon=plane color=#3498db>NAV / ALT</pill>", "", "")
             should_scroll_to_bottom = true
         end
         if imgui.MenuItem("Insert Master Warning Light") then
-            wrap_or_insert("<pill icon=avionics_beacon color=#e74c3c />", "", "")
+            wrap_or_insert("<pill icon=warning color=#e74c3c />", "", "")
+            should_scroll_to_bottom = true
+        end
+        if imgui.MenuItem("Insert Vector Icon (:plane:)") then
+            wrap_or_insert("<icon blue plane /> ", "", "")
+            should_scroll_to_bottom = true
+        end
+        if imgui.MenuItem("Insert Status Check (:check:)") then
+            wrap_or_insert("<icon green check /> ", "", "")
+            should_scroll_to_bottom = true
+        end
+        if imgui.MenuItem("Insert Caution Warning (:warning:)") then
+            wrap_or_insert("<icon orange warning /> ", "", "")
             should_scroll_to_bottom = true
         end
         if imgui.MenuItem("Insert Checklist Task") then
@@ -994,7 +1017,7 @@ local function render_bottom_status_bar(avail_w)
             should_scroll_to_bottom = true
         end
         if imgui.MenuItem("Insert Interactive Table") then
-            wrap_or_insert("\n| Parameter | Value | Status |\n| :--- | :---: | :---: |\n| Item 1 | 100 | <badge icon=avionics_beacon green>OK</badge> |\n| Item 2 | 200 | <pill icon=avionics_beacon color=#3498db>ACTIVE</pill> |\n", "", "")
+            wrap_or_insert("\n| Parameter | Value | Status |\n| :--- | :---: | :---: |\n| Engine 1 | Normal | <icon green check /> <badge green>OK</badge> |\n| Pitot Heat | Off | <icon orange warning /> <badge red>OFF</badge> |\n", "", "")
             should_scroll_to_bottom = true
         end
         imgui.Separator()
@@ -1162,7 +1185,7 @@ local function md_editor_render_content()
     if zoom_adjusting then
         clear_active_tooltip()
     else
-        show_tooltip(string.format("**Content Canvas Zoom:** `%d%%` (`%d px`)\n\n* **Steppers & Wheel:** Step by 1 exact font pixel\n* **100%% Baseline:** 16 px\n* **Reset (100%%):** Toggle 100%% and prior zoom", zoom_pct, math.floor(content_zoom * 16.0 + 0.5)))
+        show_tooltip(string.format("**Content Canvas Zoom:** `%d%%` (`%d px`)\n\n* **Steppers & Wheel:** Step by 1 exact font pixel\n* **100%% Baseline:** 16 px\n* **Reset (↺ 100%%):** Toggle 100%% and prior zoom", zoom_pct, math.floor(content_zoom * 16.0 + 0.5)))
     end
 
     imgui.SameLine(0, 4)
@@ -1223,9 +1246,9 @@ local function md_editor_render_content()
         clear_active_tooltip()
     end
     if zoom_pct ~= 100 then
-        show_tooltip("**Reset Zoom (100%)**\n\nReset canvas font scale back to 100% baseline.")
+        show_tooltip("**Reset Zoom (↺ 100%)**\n\nReset canvas font scale back to 100% baseline.")
     elseif last_zoom_pct then
-        show_tooltip(string.format("**Restore Zoom (%d%%)**\n\n1-click A/B toggle back to prior %d%% zoom.", last_zoom_pct, last_zoom_pct))
+        show_tooltip(string.format("**Restore Zoom (↻ %d%%)**\n\n1-click A/B toggle back to prior %d%% zoom.", last_zoom_pct, last_zoom_pct))
     else
         show_tooltip("**Zoom Baseline (100%)**\n\nCanvas font scale is at 100% baseline.")
     end
