@@ -151,17 +151,17 @@ Welcome to your in-cockpit **FlyWithLua Markdown Editor**!
 * **Live Formatting:** Headers, **bold**, *italic*, <u>underline</u>, and ~~strikethrough~~.
 * **Interactive GFM Tables:** Markdown tables support drag-resizable column dividers and column sorting.
 * **Async Remote Badges:** Syntax like `![Badge](https://img.shields.io/...)` loads smoothly in the background.
-* **Avionics Badges:** <badge green>ENG 1 NORMAL</badge> <badge yellow>FUEL PUMP AUTO</badge> <badge red>FIRE TEST</badge>
+* **Avionics Annunciators:** <pill icon=avionics_beacon color=#3498db>NAV / ALT</pill> <pill icon=avionics_beacon color=#2ecc71>ALT (Mode C)</pill> <pill icon=avionics_beacon orange>PITOT ON</pill> <pill icon=avionics_beacon color=#e74c3c />
 * **Keycaps & Shortcuts:** Press <kbd>Alt+F4</kbd> or <kbd>Ctrl+Shift+P</kbd>
 * **Dual-Bracket Hyperlinks:** [FlyWithLua Documentation](https://github.com/sparker256/FlyWithLua) or {Cockpit Notes}(https://github.com/slgoldberg/FlyWithLua-CockpitNotes)
 
 ### Flight Plan Waypoint Sample
 | Fix / Point | Altitude | Distance | Fuel Rem | Status |
 | :--- | :---: | :---: | :---: | :---: |
-| **KORD** (Dep) | Field | 0 NM | 18,800 lbs | <badge green>DEPARTED</badge> |
-| **JOT** (VOR) | 5,000 | 28 NM | 17,900 lbs | <pill green>CLIMB</pill> |
-| **DLL** (VOR) | FL340 | 142 NM | 14,800 lbs | <pill blue>CRUISE</pill> |
-| **KMSP** (Dest) | Field | 334 NM | 9,400 lbs | <badge yellow>PLANNED</badge> |
+| **KORD** (Dep) | Field | 0 NM | 18,800 lbs | <badge icon=avionics_beacon green>DEPARTED</badge> |
+| **JOT** (VOR) | 5,000 | 28 NM | 17,900 lbs | <pill icon=avionics_beacon color=#2ecc71>CLIMB</pill> |
+| **DLL** (VOR) | FL340 | 142 NM | 14,800 lbs | <pill icon=avionics_beacon color=#3498db>CRUISE</pill> |
+| **KMSP** (Dest) | Field | 334 NM | 9,400 lbs | <badge icon=avionics_beacon yellow>PLANNED</badge> |
 
 ### Cockpit Checklist
 - `[x]` Pre-flight briefing complete
@@ -182,10 +182,12 @@ An interactive in-cockpit Markdown scratchpad and flight notes system for X-Plan
 ### Key Capabilities
 * **Interactive GFM Tables:** Standard GitHub Flavored Markdown tables (`| Col 1 | Col 2 |`) with drag-resizable column dividers, right-border table width adjustment, and column sorting.
 * **Async Remote Images & Badges:** Non-blocking background worker threads for `![Badge](https://img.shields.io/...)` badges and online diagrams without sim frame drops.
+* **Embedded Vector Icons & Annunciators:** Live annunciator capsules with embedded vector icons (`<pill icon=avionics_beacon>...</pill>`) and unary status lights (`<pill icon=avionics_beacon color=#e74c3c />`).
+* **Zero-Scroll-Leak Pulldowns:** Non-capturing `imgui.SelectPulldown` lets you browse templates without stealing mouse-wheel scroll from your notes.
+* **Directional Blossoming Popups:** Quick action menus blossom upward (`PopupAnchor.AboveItem`) from the bottom status bar without spilling off the screen.
 * **Live Markdown Typography:** Headers (`#`, `##`), **bold**, *italic*, <u>underline</u>, ~~strikethrough~~, bulleted lists, and formatted code blocks with syntax styling.
 * **Dual-Bracket Hyperlinks:** Standard CommonMark `[Label](url)` and `![Alt](img)` links supported side-by-side with legacy `{...}` brackets.
 * **In-Cockpit File Management:** Turnkey C++11 native directory combo (`imgui.FilePickerCombo`) and in-viewport modal `[Open...]` and `[Save As...]` dialogs.
-* **Avionics Badges & Annunciators:** Instrument callouts and status indicators using `<badge green|yellow|red>` and `<pill blue|green|default>`.
 * **Cockpit Checklists & Tasks:** Prepend `- [ ]` or click `[ ] Task` to format verify-and-execute flight crew checklists with inline monospace boxes.
 * **Tactile Canvas Zoom:** Dynamic font scaling from **50% to 200%** with 1-point quantum steppers, mouse-wheel adjust, and 1-click A/B toggle back to 100% baseline.
 * **Dedicated Multi-Note Storage:** Automatic file persistence in `FlyWithLua/Scripts/CockpitNotes/notes/` with active note file selection and instant new note creation.
@@ -290,10 +292,19 @@ local templates = {
 
 ---
 
+## Flight Deck Status & Automation
+* **Autopilot Mode:** <pill icon=avionics_beacon color=#3498db>NAV / ALT</pill>
+* **Transponder Mode:** <pill icon=avionics_beacon color=#2ecc71>ALT (Mode C)</pill>
+* **Pitot & Anti-Ice:** <pill icon=avionics_beacon orange>ON</pill>
+* **Master Warning:** <pill icon=avionics_beacon color=#e74c3c />
+* **TCAS Surveillance:** <badge icon=avionics_beacon>TA/RA</badge>
+
+---
+
 ## Communication & Nav Frequencies
 | Station / Service | Facility | Frequency | Status |
 | :--- | :--- | :---: | :---: |
-| **ORD ATIS** | Arrival / Departure | 135.400 | <badge green>ACTIVE</badge> |
+| **ORD ATIS** | Arrival / Departure | 135.400 | <badge icon=avionics_beacon green>ACTIVE</badge> |
 | **ORD Clearance** | Pre-Taxi Clearance | 121.150 | Monitored |
 | **ORD Ground** | Metering / North Ground | 124.125 | Standby |
 | **ORD Tower** | Local Control (28R) | 120.750 | Standby |
@@ -306,12 +317,12 @@ local templates = {
 ## Waypoint Navigation Log
 | Fix / Waypoint | Airway | Course | Leg (NM) | Rem (NM) | Altitude | Est Fuel (lbs) | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **KORD** | — | — | 0 | 334 | Field | 18,800 | <badge green>DEP</badge> |
-| **JOT** (Joliet VOR) | DCT | 215° | 28 | 306 | 5,000 | 17,900 | <pill green>CLIMB</pill> |
-| **BAE** (Badger VOR) | V100 | 322° | 64 | 242 | FL240 | 16,100 | <pill green>CLIMB</pill> |
-| **DLL** (Dells VOR) | V100 | 305° | 78 | 164 | FL340 | 14,800 | <pill blue>CRUISE</pill> |
-| **ALTRN** (Waypoint) | Direct | 296° | 92 | 72 | FL340 | 12,600 | <pill blue>CRUISE</pill> |
-| **KMSP** (Destination)| Direct | 298° | 72 | 0 | Field | 9,400 | <badge yellow>ARR</badge> |
+| **KORD** | — | — | 0 | 334 | Field | 18,800 | <badge icon=avionics_beacon green>DEP</badge> |
+| **JOT** (Joliet VOR) | DCT | 215° | 28 | 306 | 5,000 | 17,900 | <pill icon=avionics_beacon color=#2ecc71>CLIMB</pill> |
+| **BAE** (Badger VOR) | V100 | 322° | 64 | 242 | FL240 | 16,100 | <pill icon=avionics_beacon color=#2ecc71>CLIMB</pill> |
+| **DLL** (Dells VOR) | V100 | 305° | 78 | 164 | FL340 | 14,800 | <pill icon=avionics_beacon color=#3498db>CRUISE</pill> |
+| **ALTRN** (Waypoint) | Direct | 296° | 92 | 72 | FL340 | 12,600 | <pill icon=avionics_beacon color=#3498db>CRUISE</pill> |
+| **KMSP** (Destination)| Direct | 298° | 72 | 0 | Field | 9,400 | <badge icon=avionics_beacon yellow>ARR</badge> |
 
 ---
 
@@ -336,13 +347,13 @@ local templates = {
 ## Weight & Balance Limits
 | Parameter | Planned (lbs) | Max Limit (lbs) | Margin | Status |
 | :--- | :---: | :---: | :---: | :---: |
-| **OEW** (Operating Empty) | 91,300 | — | — | <badge green>OK</badge> |
-| **Payload** (Pax + Cargo) | 35,400 | 43,000 | +7,600 | <badge green>OK</badge> |
-| **ZFW** (Zero Fuel Weight) | 126,700 | 138,300 | +11,600 | <badge green>+11,600 lbs</badge> |
-| **TOW** (Takeoff Weight) | 145,500 | 174,200 | +28,700 | <badge green>+28,700 lbs</badge> |
-| **ELW** (Landing Weight) | 136,100 | 146,300 | +10,200 | <badge green>+10,200 lbs</badge> |
+| **OEW** (Operating Empty) | 91,300 | — | — | <badge icon=avionics_beacon green>OK</badge> |
+| **Payload** (Pax + Cargo) | 35,400 | 43,000 | +7,600 | <badge icon=avionics_beacon green>OK</badge> |
+| **ZFW** (Zero Fuel Weight) | 126,700 | 138,300 | +11,600 | <badge icon=avionics_beacon green>+11,600 lbs</badge> |
+| **TOW** (Takeoff Weight) | 145,500 | 174,200 | +28,700 | <badge icon=avionics_beacon green>+28,700 lbs</badge> |
+| **ELW** (Landing Weight) | 136,100 | 146,300 | +10,200 | <badge icon=avionics_beacon green>+10,200 lbs</badge> |
 
-* **Center of Gravity (CG):** `21.4% MAC` | **Takeoff Trim:** <pill green>5.2 ANU</pill>
+* **Center of Gravity (CG):** `21.4% MAC` | **Takeoff Trim:** <pill icon=avionics_beacon color=#2ecc71>5.2 ANU</pill>
 
 ---
 
@@ -361,10 +372,10 @@ local templates = {
 ### Fuel Thresholds & Bingo State
 | Threshold | Quantity | Indicator | Required Action |
 | :--- | :---: | :---: | :--- |
-| **Ramp / Block Fuel** | 18,800 lbs | <pill green>NORMAL</pill> | Totalizer verified against uplift receipt |
-| **Min Takeoff Fuel** | 18,000 lbs | <pill green>NORMAL</pill> | Abort takeoff if below threshold |
-| **Diversion Bingo** | 5,550 lbs | <badge yellow>BINGO</badge> | Divert immediately to KSBN alternate |
-| **Emergency Fuel** | 2,450 lbs | <badge red>MAYDAY</badge> | Declare "Mayday Fuel" with ATC |
+| **Ramp / Block Fuel** | 18,800 lbs | <pill icon=avionics_beacon color=#2ecc71>NORMAL</pill> | Totalizer verified against uplift receipt |
+| **Min Takeoff Fuel** | 18,000 lbs | <pill icon=avionics_beacon color=#2ecc71>NORMAL</pill> | Abort takeoff if below threshold |
+| **Diversion Bingo** | 5,550 lbs | <badge icon=avionics_beacon yellow>BINGO</badge> | Divert immediately to KSBN alternate |
+| **Emergency Fuel** | 2,450 lbs | <badge icon=avionics_beacon red>MAYDAY</badge> | Declare "Mayday Fuel" with ATC |
 
 ---
 
@@ -396,7 +407,7 @@ local templates = {
 
 * **Airport Elevation:** `799 ft MSL` | **Bearing & Distance:** `085° Mag / 64 NM`
 * **Estimated Time Enroute (ETE):** `14 minutes` (High-speed descent profile)
-* **Approach Minima / DA:** <pill blue>999 ft MSL (200 ft AGL) / RVR 2400</pill>
+* **Approach Minima / DA:** <pill icon=avionics_beacon color=#3498db>999 ft MSL (200 ft AGL) / RVR 2400</pill>
 
 ---
 
@@ -410,13 +421,13 @@ local templates = {
 ## Fuel Reserves & Bingo Status
 | State / Threshold | Fuel (lbs) | Endurance | Status |
 | :--- | :---: | :---: | :---: |
-| **FOB at Decision** | 7,600 | 01:35 | <pill green>ONBOARD</pill> |
+| **FOB at Decision** | 7,600 | 01:35 | <pill icon=avionics_beacon color=#2ecc71>ONBOARD</pill> |
 | **Burn to Alternate** | 2,100 | 00:25 | Planned Burn |
-| **Estimated Touchdown FOB** | 5,500 | 01:10 | <badge green>SAFE</badge> |
+| **Estimated Touchdown FOB** | 5,500 | 01:10 | <badge icon=avionics_beacon green>SAFE</badge> |
 | **Final Legal Reserve** | 2,450 | 00:30 | Required |
-| **Usable Holding Margin** | +3,050 | +00:38 | <badge green>+38 min hold</badge> |
-| **Minimum Diversion Bingo** | 5,550 | — | <badge yellow>BINGO</badge> |
-| **Emergency Fuel Threshold** | 2,450 | — | <badge red>MAYDAY</badge> |
+| **Usable Holding Margin** | +3,050 | +00:38 | <badge icon=avionics_beacon green>+38 min hold</badge> |
+| **Minimum Diversion Bingo** | 5,550 | — | <badge icon=avionics_beacon yellow>BINGO</badge> |
+| **Emergency Fuel Threshold** | 2,450 | — | <badge icon=avionics_beacon red>MAYDAY</badge> |
 
 ---
 
@@ -511,6 +522,30 @@ local pitch_deg   = get("sim/flightmodel/position/theta")
 * **Autopilot:** <pill blue>LNAV / VNAV PATH</pill>
 * **Flaps:** `UP / 0°`
 ]]
+}
+
+local template_names = {
+    "Aviation Templates...",
+    "ATIS Copy Pad",
+    "IFR Clearance (CRAFT)",
+    "Pre-Flight Checklist",
+    "IFR Navigation Log (NavLog)",
+    "Fuel & Weight Planning",
+    "Diversion Briefing",
+    "METAR / TAF Scratchpad",
+    "FlyWithLua Scratchpad",
+}
+
+local template_tips = {
+    "Choose a pre-formatted flight template to insert into your note",
+    "Standard ATIS copy pad with airport, weather, runways and NOTAMs",
+    "Full IFR clearance CRAFT briefing and verification checklist",
+    "Pre-flight cockpit preparation and avionics setup checklist",
+    "Full IFR navigation log with frequencies, waypoints, and leg fuel",
+    "Fuel calculations, reserves, weight & balance, and bingo thresholds",
+    "In-flight diversion briefing, alternate runway assessment, and fuel",
+    "METAR & TAF weather briefing and station comparison table",
+    "Quick Lua scratchpad for inspecting Datarefs and avionics state",
 }
 
 -- ----------------------------------------------------------------------------
@@ -853,6 +888,107 @@ local function format_tasks(text)
                 :gsub("(\n%s*[%-*]%s+)%[[xX]%]", "%1`[x]`")
                 :gsub("^(%s*[%-*]%s+)%[%s*%]", "%1`[ ]`")
                 :gsub("^(%s*[%-*]%s+)%[[xX]%]", "%1`[x]`"))
+end
+
+-- ----------------------------------------------------------------------------
+-- Bottom Status Bar with Directional Blossoming Quick Actions Popup
+-- ----------------------------------------------------------------------------
+local function render_bottom_status_bar(avail_w)
+    imgui.Separator()
+
+    if imgui.AlignTextToFramePadding then
+        imgui.AlignTextToFramePadding()
+    end
+
+    local text = editor_text or ""
+    local num_chars = #text
+    local num_lines = 1
+    for _ in string.gmatch(text, "\n") do
+        num_lines = num_lines + 1
+    end
+
+    local zoom_pct = math.floor(content_zoom * 100.0 + 0.5)
+    local status_str = string.format("Note: %s  |  %d lines  |  %d chars  |  Zoom: %d%%",
+        current_filename, num_lines, num_chars, zoom_pct)
+
+    imgui.TextDisabled(status_str)
+
+    -- Right-aligned Quick Actions button
+    local btn_label = "Quick Actions ▲##btnQuickActions"
+    local btn_w = 145
+    local win_w = (imgui.GetWindowWidth and imgui.GetWindowWidth()) or avail_w
+    local right_x = win_w - btn_w - 20
+    local cur_x = (imgui.GetCursorPosX and imgui.GetCursorPosX()) or 0
+    if right_x > cur_x then
+        imgui.SameLine(right_x)
+    else
+        imgui.SameLine()
+    end
+
+    if imgui.Button and imgui.Button(btn_label, btn_w, 20) then
+        if imgui.OpenPopupAtItem then
+            imgui.OpenPopupAtItem("##QuickActionsPopup",
+                (imgui.PopupAnchor and imgui.PopupAnchor.AboveItem) or 1,
+                (imgui.PopupAlign and imgui.PopupAlign.Right) or 1)
+        else
+            imgui.OpenPopup("##QuickActionsPopup")
+        end
+    end
+    show_tooltip("**Quick Actions & Flight Deck Snippets**\n\nBlossoms upward from the status bar to quickly insert:\n* Aviation scratchpads & checklists\n* Annunciator status capsules\n* Master warning indicators\n* Markdown tables and checklists")
+
+    -- Blossoming anchored popup (AboveItem, Right aligned)
+    local is_open = false
+    if imgui.BeginAnchoredPopup then
+        is_open = imgui.BeginAnchoredPopup("##QuickActionsPopup")
+    elseif imgui.BeginPopup then
+        is_open = imgui.BeginPopup("##QuickActionsPopup")
+    end
+
+    if is_open then
+        imgui.TextDisabled("FLIGHT DECK QUICK ACTIONS")
+        imgui.Separator()
+        if imgui.MenuItem("Insert ATIS Copy Pad") then
+            editor_text = templates["ATIS Copy Pad"]
+            editor_epoch = editor_epoch + 1
+            just_formatted = true
+        end
+        if imgui.MenuItem("Insert CRAFT Clearance") then
+            editor_text = templates["IFR Clearance (CRAFT)"]
+            editor_epoch = editor_epoch + 1
+            just_formatted = true
+        end
+        if imgui.MenuItem("Insert NavLog Template") then
+            editor_text = templates["IFR Navigation Log (NavLog)"]
+            editor_epoch = editor_epoch + 1
+            just_formatted = true
+        end
+        imgui.Separator()
+        if imgui.MenuItem("Insert NavLog Row") then
+            wrap_or_insert("| **FIX** | Direct | 000° | 0 | 0 | FL000 | 0,000 | <pill icon=avionics_beacon color=#3498db>CRUISE</pill> |\n", "", "")
+        end
+        if imgui.MenuItem("Insert Annunciator Pill") then
+            wrap_or_insert("<pill icon=avionics_beacon color=#3498db>NAV / ALT</pill>", "", "")
+        end
+        if imgui.MenuItem("Insert Master Warning Light") then
+            wrap_or_insert("<pill icon=avionics_beacon color=#e74c3c />", "", "")
+        end
+        if imgui.MenuItem("Insert Checklist Task") then
+            wrap_or_insert("- `[ ]` ", "", "Task description", true)
+        end
+        if imgui.MenuItem("Insert Interactive Table") then
+            wrap_or_insert("\n| Parameter | Value | Status |\n| :--- | :---: | :---: |\n| Item 1 | 100 | <badge icon=avionics_beacon green>OK</badge> |\n| Item 2 | 200 | <pill icon=avionics_beacon color=#3498db>ACTIVE</pill> |\n", "", "")
+        end
+        imgui.Separator()
+        if imgui.MenuItem("Clear Note Scratchpad") then
+            editor_text = ""
+            editor_epoch = editor_epoch + 1
+            just_formatted = true
+        end
+        if imgui.MenuItem("Close Menu") then
+            imgui.CloseCurrentPopup()
+        end
+        imgui.EndPopup()
+    end
 end
 
 -- ----------------------------------------------------------------------------
@@ -1208,9 +1344,9 @@ local function md_editor_render_content()
         imgui.SameLine()
         if toolbar_button("[ ] Task", "**Checklist Task Item**\n\nPrepend `- `[ ]` ` interactive checklist item.") then wrap_or_insert("- `[ ]` ", "", "Checklist task to verify", true) end
         imgui.SameLine()
-        if toolbar_button("<badge>", "**Avionics Badge**\n\nWrap selection in `<badge green|yellow|red>...</badge>` for instrument annunciators.") then wrap_or_insert("<badge green>", "</badge>", "NORMAL") end
+        if toolbar_button("<badge>", "**Avionics Badge**\n\nWrap selection in `<badge icon=avionics_beacon green>...</badge>` for instrument annunciators.") then wrap_or_insert("<badge icon=avionics_beacon green>", "</badge>", "NORMAL") end
         imgui.SameLine()
-        if toolbar_button("<pill>", "**Avionics Pill**\n\nWrap selection in `<pill blue|green|default>...</pill>` for system mode callouts.") then wrap_or_insert("<pill blue>", "</pill>", "ACTIVE") end
+        if toolbar_button("<pill>", "**Avionics Pill**\n\nWrap selection in `<pill icon=avionics_beacon color=#3498db>...</pill>` for system mode callouts.") then wrap_or_insert("<pill icon=avionics_beacon color=#3498db>", "</pill>", "ACTIVE") end
         imgui.SameLine()
         if toolbar_button("<kbd>", "**Keyboard Keycap**\n\nWrap selection in physical keycap `<kbd>Key</kbd>`.") then wrap_or_insert("<kbd>", "</kbd>", "Key") end
         imgui.SameLine()
@@ -1219,33 +1355,46 @@ local function md_editor_render_content()
         if toolbar_button("Link", "**Markdown Link**\n\nWrap selection in CommonMark `[Label](url)` hyperlink.") then wrap_or_insert("[", "](https://)", "Link text") end
         imgui.SameLine()
         if toolbar_button("Table", "**GFM Markdown Table**\n\nInsert interactive GFM table with drag-resizable columns and column sorting.") then
-            wrap_or_insert("\n| Parameter | Value | Status |\n| :--- | :---: | :---: |\n| Item 1 | 100 | <badge green>OK</badge> |\n| Item 2 | 200 | <pill blue>ACTIVE</pill> |\n", "", "")
+            wrap_or_insert("\n| Parameter | Value | Status |\n| :--- | :---: | :---: |\n| Item 1 | 100 | <badge icon=avionics_beacon green>OK</badge> |\n| Item 2 | 200 | <pill icon=avionics_beacon color=#3498db>ACTIVE</pill> |\n", "", "")
         end
         imgui.SameLine()
         if toolbar_button("Badge", "**Async Remote Badge / Image**\n\nInsert async non-blocking shields.io or web image badge.") then
             wrap_or_insert("![Badge](https://img.shields.io/badge/", "-blue)", "Title-Value")
         end
 
-        -- Templates Dropdown
+        -- Templates Dropdown (Zero-Scroll-Leak SelectPulldown)
         imgui.SameLine()
         imgui.TextUnformatted("|")
         imgui.SameLine()
-        if imgui.SetNextItemWidth then
-            imgui.SetNextItemWidth(175)
-        end
-        if imgui.BeginCombo("##templates", "Aviation Templates...", 0) then
-            local ok, err = pcall(function()
-                for name, content in pairs(templates) do
-                    if imgui.Selectable(name, false) then
-                        editor_text = content
-                        editor_epoch = editor_epoch + 1
-                        just_formatted = true
-                    end
+        if imgui.SelectPulldown then
+            local changed, new_idx = imgui.SelectPulldown("##templates_pulldown", 0, template_names, template_tips, 195)
+            if changed and new_idx and new_idx > 0 then
+                local chosen_name = template_names[new_idx + 1]
+                if chosen_name and templates[chosen_name] then
+                    editor_text = templates[chosen_name]
+                    editor_epoch = editor_epoch + 1
+                    just_formatted = true
                 end
-            end)
-            imgui.EndCombo()
-            if not ok then
-                print("[FlyWithLua CockpitNotes] Error in Templates Combo: " .. tostring(err))
+            end
+        else
+            if imgui.SetNextItemWidth then
+                imgui.SetNextItemWidth(175)
+            end
+            if imgui.BeginCombo("##templates", "Aviation Templates...", 0) then
+                local ok, err = pcall(function()
+                    for i = 2, #template_names do
+                        local name = template_names[i]
+                        if imgui.Selectable(name, false) then
+                            editor_text = templates[name]
+                            editor_epoch = editor_epoch + 1
+                            just_formatted = true
+                        end
+                    end
+                end)
+                imgui.EndCombo()
+                if not ok then
+                    print("[FlyWithLua CockpitNotes] Error in Templates Combo: " .. tostring(err))
+                end
             end
         end
         show_tooltip("**Aviation Templates**\n\nLoad pre-formatted cockpit checklists and scratchpads:\n* **ATIS Copy Pad**\n* **IFR Clearance (CRAFT)**\n* **Pre-Flight Checklist**\n* **IFR Navigation Log (NavLog)**\n* **Fuel & Weight Planning**\n* **Diversion Briefing**\n* **METAR / TAF Scratchpad**\n* **FlyWithLua Scratchpad**")
@@ -1258,7 +1407,7 @@ local function md_editor_render_content()
     -- ------------------------------------------------------------------------
     if view_mode == "Write" then
         -- 1. Fullscreen Editor
-        if imgui.BeginChild("FullEditorChild", 0, 0, 1) then
+        if imgui.BeginChild("FullEditorChild", 0, -28, 1) then
             imgui.TextDisabled("RAW MARKDOWN SOURCE:")
 
             local win_w = (imgui.GetWindowWidth and imgui.GetWindowWidth()) or avail_w
@@ -1300,7 +1449,7 @@ local function md_editor_render_content()
 
     elseif view_mode == "Preview" then
         -- 2. Fullscreen Live Rendered Preview
-        if imgui.BeginChild("FullPreviewChild", 0, 0, 1) then
+        if imgui.BeginChild("FullPreviewChild", 0, -28, 1) then
             imgui.TextDisabled("RENDERED MARKDOWN PREVIEW:")
 
             local win_w = (imgui.GetWindowWidth and imgui.GetWindowWidth()) or avail_w
@@ -1329,7 +1478,7 @@ local function md_editor_render_content()
         local col_w = math.floor((avail_w - 16) * 0.5)
 
         -- Left Pane: Editor (with Word-Wrap enabled)
-        if imgui.BeginChild("SplitEditorChild", col_w, 0, 1) then
+        if imgui.BeginChild("SplitEditorChild", col_w, -28, 1) then
             imgui.TextDisabled("RAW MARKDOWN SOURCE:")
 
             local win_w = (imgui.GetWindowWidth and imgui.GetWindowWidth()) or col_w
@@ -1372,7 +1521,7 @@ local function md_editor_render_content()
         imgui.SameLine(0, 16)
 
         -- Right Pane: Live Rendered Preview (with Soft-Wrapping enabled)
-        if imgui.BeginChild("SplitPreviewChild", col_w, 0, 1) then
+        if imgui.BeginChild("SplitPreviewChild", col_w, -28, 1) then
             imgui.TextDisabled("LIVE RENDERED PREVIEW:")
 
             if imgui.SetWindowFontScale then
@@ -1383,6 +1532,11 @@ local function md_editor_render_content()
             imgui.EndChild()
         end
     end
+
+    -- ------------------------------------------------------------------------
+    -- BOTTOM STATUS BAR (With Directional Blossoming Quick Actions Popup)
+    -- ------------------------------------------------------------------------
+    render_bottom_status_bar(avail_w)
 
     -- ------------------------------------------------------------------------
     -- IN-COCKPIT FILE DIALOGS (Modal, VR-safe, non-blocking)

@@ -18,7 +18,7 @@
 
 * **Airport Elevation:** `799 ft MSL` | **Bearing & Distance:** `085° Mag / 64 NM`
 * **Estimated Time Enroute (ETE):** `14 minutes` (High-speed descent profile)
-* **Approach Minima / DA:** <pill blue>999 ft MSL (200 ft AGL) / RVR 2400</pill>
+* **Approach Minima / DA:** <pill icon=avionics_beacon color=#3498db>999 ft MSL (200 ft AGL) / RVR 2400</pill>
 
 ---
 
@@ -32,13 +32,13 @@
 ## Fuel Reserves & Bingo Status
 | State / Threshold | Fuel (lbs) | Endurance | Status |
 | :--- | :---: | :---: | :---: |
-| **FOB at Decision** | 7,600 | 01:35 | <pill green>ONBOARD</pill> |
+| **FOB at Decision** | 7,600 | 01:35 | <pill icon=avionics_beacon color=#2ecc71>ONBOARD</pill> |
 | **Burn to Alternate** | 2,100 | 00:25 | Planned Burn |
-| **Estimated Touchdown FOB** | 5,500 | 01:10 | <badge green>SAFE</badge> |
+| **Estimated Touchdown FOB** | 5,500 | 01:10 | <badge icon=avionics_beacon green>SAFE</badge> |
 | **Final Legal Reserve** | 2,450 | 00:30 | Required |
-| **Usable Holding Margin** | +3,050 | +00:38 | <badge green>+38 min hold</badge> |
-| **Minimum Diversion Bingo** | 5,550 | — | <badge yellow>BINGO</badge> |
-| **Emergency Fuel Threshold** | 2,450 | — | <badge red>MAYDAY</badge> |
+| **Usable Holding Margin** | +3,050 | +00:38 | <badge icon=avionics_beacon green>+38 min hold</badge> |
+| **Minimum Diversion Bingo** | 5,550 | — | <badge icon=avionics_beacon yellow>BINGO</badge> |
+| **Emergency Fuel Threshold** | 2,450 | — | <badge icon=avionics_beacon red>MAYDAY</badge> |
 
 ---
 
