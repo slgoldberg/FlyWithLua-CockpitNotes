@@ -16,12 +16,14 @@ Welcome to **Cockpit Notes** for FlyWithLua!
   * Emoji Shortcodes: `:plane:` Route, `:check:` Verified, `:warning:` Advisory
   * Raw-Fallback Macro: `#[^](ICON_CARET_UP)` Pitch Up, `#[↺](ICON_UNDO)` Reset
   * Rescued Raw Unicode: `↺` Reset, `↻` Restore, `▲` Up, `▼` Down, `✓` Check, `⚠` Warning
+* **Inline Sized Typography:**
+  * Sizing Tags: <tiny color=#888888>tiny (10px)</tiny>, <small color=gray>small (12px)</small>, <regular>regular (14px)</regular>, <big>big (16px)</big>, <huge color=orange>huge (16px+ bold)</huge>
 * **Avionics Annunciators:**
   * Autopilot: <pill icon=plane color=#3498db>NAV / ALT</pill>
   * Transponder: <pill icon=check color=#2ecc71>ALT (Mode C)</pill>
   * Pitot Heat: <pill icon=warning orange>ON</pill>
   * Master Warning: <pill icon=warning color=#e74c3c />
-  * Firmware: <badge icon=plane>v2.3.0</badge>
+  * Firmware: <badge icon=plane>v2.3.0</badge> <tiny color=#888888>(build 4268f3d)</tiny>
 
 ---
 

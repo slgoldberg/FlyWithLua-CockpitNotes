@@ -163,6 +163,7 @@ Welcome to your in-cockpit **FlyWithLua Markdown Editor**!
   * Emoji Shortcodes: `:plane:` Route, `:check:` Verified, `:warning:` Advisory
   * Raw-Fallback Macro: `#[^](ICON_CARET_UP)` Pitch Up, `#[↺](ICON_UNDO)` Reset
   * Rescued Raw Unicode: `↺` Reset, `↻` Restore, `▲` Up, `▼` Down, `✓` Check, `⚠` Warning
+* **Inline Sized Typography:** <tiny color=#888888>tiny (10px)</tiny> | <small color=gray>small (12px)</small> | <regular>regular (14px)</regular> | <big>big (16px)</big> | <huge color=orange>huge (16px+ bold)</huge>
 * **Avionics Annunciators:** <pill icon=plane color=#3498db>NAV / ALT</pill> <pill icon=check color=#2ecc71>ALT (Mode C)</pill> <pill icon=warning orange>PITOT ON</pill> <pill icon=warning color=#e74c3c />
 * **Keycaps & Shortcuts:** Press <kbd>Alt+F4</kbd> or <kbd>Ctrl+Shift+P</kbd>
 * **Dual-Bracket Hyperlinks:** [FlyWithLua Documentation](https://github.com/sparker256/FlyWithLua) or {Cockpit Notes}(https://github.com/slgoldberg/FlyWithLua-CockpitNotes)
