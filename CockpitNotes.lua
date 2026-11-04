@@ -151,7 +151,7 @@ end
 -- Default scratchpad template loaded if no saved notes exist on disk
 local initial_doc = [[# Cockpit Notes & Scratchpad
 
-![FlyWithLua](https://img.shields.io/badge/FlyWithLua-Phase_3_Suite-blue) ![X-Plane 12](https://img.shields.io/badge/Simulator-X--Plane_12-informational) ![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+![FlyWithLua](https://img.shields.io/badge/FlyWithLua-Phase_3_Suite-blue.png) ![X-Plane 12](https://img.shields.io/badge/Simulator-X--Plane_12-informational.png) ![Status](https://img.shields.io/badge/Status-Active-brightgreen.png)
 
 Welcome to your in-cockpit **FlyWithLua Markdown Editor**!
 
@@ -298,7 +298,7 @@ local templates = {
 
     ["IFR Navigation Log (NavLog)"] = [[# IFR Navigation Log & Route Plan
 
-![Flight](https://img.shields.io/badge/Flight-KORD_%E2%9C%88_KMSP-blue) ![Cruise](https://img.shields.io/badge/Cruise-FL340_M0.78-informational) ![Rules](https://img.shields.io/badge/Rules-IFR-green) ![Dispatch](https://img.shields.io/badge/Dispatch-SimBrief-orange)
+![Flight](https://img.shields.io/badge/Flight-KORD_%E2%9C%88_KMSP-blue.png) ![Cruise](https://img.shields.io/badge/Cruise-FL340_M0.78-informational.png) ![Rules](https://img.shields.io/badge/Rules-IFR-green.png) ![Dispatch](https://img.shields.io/badge/Dispatch-SimBrief-orange.png)
 
 * **Route:** `KORD DCT JOT V100 BAE DLL ALTRN KMSP`
 * **Cruise Profile:** `FL340 / Mach 0.78` | **Groundspeed:** `~440 kt`
@@ -350,7 +350,7 @@ local templates = {
 
     ["Fuel & Weight Planning"] = [[# Fuel & Weight Planning
 
-![SimBrief](https://img.shields.io/badge/Dispatch-SimBrief_Validated-green) ![Fuel State](https://img.shields.io/badge/Ramp_Fuel-18.8k_lbs-blue) ![Type](https://img.shields.io/badge/Type-B737--800-informational)
+![SimBrief](https://img.shields.io/badge/Dispatch-SimBrief_Validated-green.png) ![Fuel State](https://img.shields.io/badge/Ramp_Fuel-18.8k_lbs-blue.png) ![Type](https://img.shields.io/badge/Type-B737--800-informational.png)
 
 * **Aircraft:** `B737-800 / A320` | **Route:** `KORD -> KMSP`
 * **Cruise:** `FL340 / M0.78` | **Cost Index:** `28`
@@ -403,7 +403,7 @@ local templates = {
 
     ["Diversion Briefing"] = [[# In-Flight Diversion Briefing
 
-![Diversion Plan](https://img.shields.io/badge/Alternate-KSBN_South_Bend-yellow) ![Approach](https://img.shields.io/badge/Approach-ILS_27L-blue) ![Fuel](https://img.shields.io/badge/Bingo-5.5k_lbs-orange)
+![Diversion Plan](https://img.shields.io/badge/Alternate-KSBN_South_Bend-yellow.png) ![Approach](https://img.shields.io/badge/Approach-ILS_27L-blue.png) ![Fuel](https://img.shields.io/badge/Bingo-5.5k_lbs-orange.png)
 
 * **Primary Destination:** `KMSP (Minneapolis-St. Paul)`
 * **Designated Alternate:** `KSBN (South Bend Regional)`
@@ -459,7 +459,7 @@ local templates = {
 
     ["METAR / TAF Scratchpad"] = [[# METAR & TAF Weather Scratchpad
 
-![NOAA Weather](https://img.shields.io/badge/Source-NOAA_AWC-blue) ![ORD Category](https://img.shields.io/badge/ORD-VFR-green) ![MSP Category](https://img.shields.io/badge/MSP-MVFR-yellow)
+![NOAA Weather](https://img.shields.io/badge/Source-NOAA_AWC-blue.png) ![ORD Category](https://img.shields.io/badge/ORD-VFR-green.png) ![MSP Category](https://img.shields.io/badge/MSP-MVFR-yellow.png)
 
 * **Flight:** `KORD -> KMSP` | **Briefing Time:** `1850Z`
 * **Weather Source:** [NOAA Aviation Weather Center](https://aviationweather.gov)
@@ -1402,7 +1402,7 @@ local function md_editor_render_content()
         end
         imgui.SameLine()
         if toolbar_button("Badge", "**Async Remote Badge / Image**\n\nInsert async non-blocking shields.io or web image badge.") then
-            wrap_or_insert("![Badge](https://img.shields.io/badge/", "-blue)", "Title-Value")
+            wrap_or_insert("![Badge](https://img.shields.io/badge/", "-blue.png)", "Title-Value")
         end
 
         -- Templates Dropdown (Zero-Scroll-Leak SelectPulldown)

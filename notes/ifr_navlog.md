@@ -1,6 +1,6 @@
 # IFR Navigation Log & Route Plan
 
-![Flight](https://img.shields.io/badge/Flight-KORD_%E2%9C%88_KMSP-blue) ![Cruise](https://img.shields.io/badge/Cruise-FL340_M0.78-informational) ![Rules](https://img.shields.io/badge/Rules-IFR-green) ![Dispatch](https://img.shields.io/badge/Dispatch-SimBrief-orange)
+![Flight](https://img.shields.io/badge/Flight-KORD_%E2%9C%88_KMSP-blue.png) ![Cruise](https://img.shields.io/badge/Cruise-FL340_M0.78-informational.png) ![Rules](https://img.shields.io/badge/Rules-IFR-green.png) ![Dispatch](https://img.shields.io/badge/Dispatch-SimBrief-orange.png)
 
 * **Route:** `KORD DCT JOT V100 BAE DLL ALTRN KMSP`
 * **Cruise Profile:** `FL340 / Mach 0.78` | **Groundspeed:** `~440 kt`

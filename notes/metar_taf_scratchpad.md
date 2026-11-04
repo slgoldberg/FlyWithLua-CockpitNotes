@@ -1,6 +1,6 @@
 # METAR & TAF Weather Scratchpad
 
-![NOAA Weather](https://img.shields.io/badge/Source-NOAA_AWC-blue) ![ORD Category](https://img.shields.io/badge/ORD-VFR-green) ![MSP Category](https://img.shields.io/badge/MSP-MVFR-yellow)
+![NOAA Weather](https://img.shields.io/badge/Source-NOAA_AWC-blue.png) ![ORD Category](https://img.shields.io/badge/ORD-VFR-green.png) ![MSP Category](https://img.shields.io/badge/MSP-MVFR-yellow.png)
 
 * **Flight:** `KORD -> KMSP` | **Briefing Time:** `1850Z`
 * **Weather Source:** [NOAA Aviation Weather Center](https://aviationweather.gov)

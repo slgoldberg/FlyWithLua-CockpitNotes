@@ -1,6 +1,6 @@
 # Cockpit Notes & Scratchpad
 
-![FlyWithLua](https://img.shields.io/badge/FlyWithLua-Phase_3_Suite-blue) ![X-Plane 12](https://img.shields.io/badge/Simulator-X--Plane_12-informational) ![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+![FlyWithLua](https://img.shields.io/badge/FlyWithLua-Phase_3_Suite-blue.png) ![X-Plane 12](https://img.shields.io/badge/Simulator-X--Plane_12-informational.png) ![Status](https://img.shields.io/badge/Status-Active-brightgreen.png)
 
 Welcome to **Cockpit Notes** for FlyWithLua!
 

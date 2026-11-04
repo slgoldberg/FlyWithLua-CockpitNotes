@@ -1,6 +1,6 @@
 # Fuel & Weight Planning
 
-![SimBrief](https://img.shields.io/badge/Dispatch-SimBrief_Validated-green) ![Fuel State](https://img.shields.io/badge/Ramp_Fuel-18.8k_lbs-blue) ![Type](https://img.shields.io/badge/Type-B737--800-informational)
+![SimBrief](https://img.shields.io/badge/Dispatch-SimBrief_Validated-green.png) ![Fuel State](https://img.shields.io/badge/Ramp_Fuel-18.8k_lbs-blue.png) ![Type](https://img.shields.io/badge/Type-B737--800-informational.png)
 
 * **Aircraft:** `B737-800 / A320` | **Route:** `KORD -> KMSP`
 * **Cruise:** `FL340 / M0.78` | **Cost Index:** `28`

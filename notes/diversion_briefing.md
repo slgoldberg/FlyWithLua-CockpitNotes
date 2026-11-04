@@ -1,6 +1,6 @@
 # In-Flight Diversion Briefing
 
-![Diversion Plan](https://img.shields.io/badge/Alternate-KSBN_South_Bend-yellow) ![Approach](https://img.shields.io/badge/Approach-ILS_27L-blue) ![Fuel](https://img.shields.io/badge/Bingo-5.5k_lbs-orange)
+![Diversion Plan](https://img.shields.io/badge/Alternate-KSBN_South_Bend-yellow.png) ![Approach](https://img.shields.io/badge/Approach-ILS_27L-blue.png) ![Fuel](https://img.shields.io/badge/Bingo-5.5k_lbs-orange.png)
 
 * **Primary Destination:** `KMSP (Minneapolis-St. Paul)`
 * **Designated Alternate:** `KSBN (South Bend Regional)`
