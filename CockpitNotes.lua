@@ -82,6 +82,16 @@ local last_zoom_change_time = 0 -- Timestamp of last zoom adjustment for tooltip
 local dec_repeat_count = 0   -- Counter to throttle repeat speed on [-] (1/4 rate)
 local inc_repeat_count = 0   -- Counter to throttle repeat speed on [+] (1/4 rate)
 
+-- Split View Layout & Synchronized Scrolling State
+local split_ratio             = 0.50  -- Draggable divider ratio (clamped 0.15 to 0.85)
+local should_scroll_to_bottom = false -- Auto-scroll flag triggered on Quick Action insertion
+local active_scroll_source    = nil   -- "editor" or "preview" for two-way scroll synchronization
+local sync_scroll_ratio       = 0.0   -- Proportional scroll ratio (0.0 to 1.0)
+
+-- Icon / Glyph configuration for Quick Actions button
+-- Set to "^" for ASCII compatibility; easily substituted with ICON_FA_CHEVRON_UP in future
+local QUICK_ACTIONS_ICON      = "^"
+
 -- ----------------------------------------------------------------------------
 -- File Persistence & In-Cockpit File Dialogs (Turnkey ImgWindow File Suite)
 -- ----------------------------------------------------------------------------
@@ -914,7 +924,8 @@ local function render_bottom_status_bar(avail_w)
     imgui.TextDisabled(status_str)
 
     -- Right-aligned Quick Actions button
-    local btn_label = "Quick Actions ▲##btnQuickActions"
+    local btn_icon = (QUICK_ACTIONS_ICON and #QUICK_ACTIONS_ICON > 0) and (" " .. QUICK_ACTIONS_ICON) or ""
+    local btn_label = string.format("Quick Actions%s##btnQuickActions", btn_icon)
     local btn_w = 145
     local win_w = (imgui.GetWindowWidth and imgui.GetWindowWidth()) or avail_w
     local right_x = win_w - btn_w - 20
@@ -934,7 +945,7 @@ local function render_bottom_status_bar(avail_w)
             imgui.OpenPopup("##QuickActionsPopup")
         end
     end
-    show_tooltip("**Quick Actions & Flight Deck Snippets**\n\nBlossoms upward from the status bar to quickly insert:\n* Aviation scratchpads & checklists\n* Annunciator status capsules\n* Master warning indicators\n* Markdown tables and checklists")
+    show_tooltip("**Quick Actions & Flight Deck Snippets**\n\nOpens upward from the status bar to quickly insert:\n* Aviation scratchpads & checklists\n* Annunciator status capsules\n* Master warning indicators\n* Markdown tables and checklists")
 
     -- Blossoming anchored popup (AboveItem, Right aligned)
     local is_open = false
@@ -951,32 +962,40 @@ local function render_bottom_status_bar(avail_w)
             editor_text = templates["ATIS Copy Pad"]
             editor_epoch = editor_epoch + 1
             just_formatted = true
+            should_scroll_to_bottom = true
         end
         if imgui.MenuItem("Insert CRAFT Clearance") then
             editor_text = templates["IFR Clearance (CRAFT)"]
             editor_epoch = editor_epoch + 1
             just_formatted = true
+            should_scroll_to_bottom = true
         end
         if imgui.MenuItem("Insert NavLog Template") then
             editor_text = templates["IFR Navigation Log (NavLog)"]
             editor_epoch = editor_epoch + 1
             just_formatted = true
+            should_scroll_to_bottom = true
         end
         imgui.Separator()
         if imgui.MenuItem("Insert NavLog Row") then
             wrap_or_insert("| **FIX** | Direct | 000° | 0 | 0 | FL000 | 0,000 | <pill icon=avionics_beacon color=#3498db>CRUISE</pill> |\n", "", "")
+            should_scroll_to_bottom = true
         end
         if imgui.MenuItem("Insert Annunciator Pill") then
             wrap_or_insert("<pill icon=avionics_beacon color=#3498db>NAV / ALT</pill>", "", "")
+            should_scroll_to_bottom = true
         end
         if imgui.MenuItem("Insert Master Warning Light") then
             wrap_or_insert("<pill icon=avionics_beacon color=#e74c3c />", "", "")
+            should_scroll_to_bottom = true
         end
         if imgui.MenuItem("Insert Checklist Task") then
             wrap_or_insert("- `[ ]` ", "", "Task description", true)
+            should_scroll_to_bottom = true
         end
         if imgui.MenuItem("Insert Interactive Table") then
             wrap_or_insert("\n| Parameter | Value | Status |\n| :--- | :---: | :---: |\n| Item 1 | 100 | <badge icon=avionics_beacon green>OK</badge> |\n| Item 2 | 200 | <pill icon=avionics_beacon color=#3498db>ACTIVE</pill> |\n", "", "")
+            should_scroll_to_bottom = true
         end
         imgui.Separator()
         if imgui.MenuItem("Clear Note Scratchpad") then
@@ -1143,7 +1162,7 @@ local function md_editor_render_content()
     if zoom_adjusting then
         clear_active_tooltip()
     else
-        show_tooltip(string.format("**Content Canvas Zoom:** `%d%%` (`%d px`)\n\n* **Steppers & Wheel:** Step by 1 exact font pixel\n* **100%% Baseline:** 16 px\n* **Reset (↺):** Toggle 100%% and prior zoom", zoom_pct, math.floor(content_zoom * 16.0 + 0.5)))
+        show_tooltip(string.format("**Content Canvas Zoom:** `%d%%` (`%d px`)\n\n* **Steppers & Wheel:** Step by 1 exact font pixel\n* **100%% Baseline:** 16 px\n* **Reset (100%%):** Toggle 100%% and prior zoom", zoom_pct, math.floor(content_zoom * 16.0 + 0.5)))
     end
 
     imgui.SameLine(0, 4)
@@ -1434,7 +1453,18 @@ local function md_editor_render_content()
             if imgui.PushFont then
                 imgui.PushFont(editor_font, editor_font_size)
             end
-            local changed, new_text = imgui.InputTextMultiline("##editor_full_" .. editor_epoch, editor_text, MAX_TEXT_BYTES, -1, -1, editor_input_flags)
+
+            -- Expand input height to match line content so FullEditorChild possesses the scroll range
+            local line_h = (imgui.GetTextLineHeightWithSpacing and imgui.GetTextLineHeightWithSpacing()) or (editor_font_size * 1.35)
+            local avail_pw, avail_ph = imgui.GetContentRegionAvail()
+            local visual_lines = 0
+            for line in string.gmatch((editor_text or "") .. "\n", "(.-)\r?\n") do
+                local wrap_chars = math.max(20, math.floor((avail_w - 40) / (9.5 * content_zoom)))
+                visual_lines = visual_lines + math.max(1, math.ceil(#line / wrap_chars))
+            end
+            local editor_box_h = math.max(avail_ph or 200, (visual_lines + 4) * line_h + 60)
+
+            local changed, new_text = imgui.InputTextMultiline("##editor_full_" .. editor_epoch, editor_text, MAX_TEXT_BYTES, -1, editor_box_h, editor_input_flags)
             if imgui.PopFont then
                 imgui.PopFont()
             end
@@ -1444,6 +1474,15 @@ local function md_editor_render_content()
             elseif changed and new_text then
                 editor_text = new_text
             end
+
+            -- Auto-scroll to bottom on Quick Action insert in single-editor mode
+            if should_scroll_to_bottom then
+                if imgui.SetScrollHereY then
+                    imgui.SetScrollHereY(1.0)
+                end
+                should_scroll_to_bottom = false
+            end
+
             imgui.EndChild()
         end
 
@@ -1474,14 +1513,25 @@ local function md_editor_render_content()
         end
 
     else -- "Split"
-        -- 3. Side-by-Side Dual Pane
-        local col_w = math.floor((avail_w - 16) * 0.5)
+        -- 3. Side-by-Side Dual Pane with Draggable Sliding Divider
+        local splitter_w = 6
+        local pane_h     = -28
+        local left_w     = math.max(60, math.min(avail_w - splitter_w - 60, math.floor((avail_w - splitter_w) * split_ratio)))
+        local right_w    = avail_w - splitter_w - left_w
 
         -- Left Pane: Editor (with Word-Wrap enabled)
-        if imgui.BeginChild("SplitEditorChild", col_w, -28, 1) then
+        if imgui.BeginChild("SplitEditorChild", left_w, pane_h, 1) then
+            -- Two-way proportional scroll sync: mirror scroll if preview was scrolled
+            if active_scroll_source == "preview" and imgui.GetScrollMaxY and imgui.SetScrollY then
+                local max_y = imgui.GetScrollMaxY()
+                if max_y > 0 then
+                    imgui.SetScrollY(sync_scroll_ratio * max_y)
+                end
+            end
+
             imgui.TextDisabled("RAW MARKDOWN SOURCE:")
 
-            local win_w = (imgui.GetWindowWidth and imgui.GetWindowWidth()) or col_w
+            local win_w = (imgui.GetWindowWidth and imgui.GetWindowWidth()) or left_w
             local copy_fn = imgui.CopyBufferButton or imgui.CopyButton
             local right_target = win_w - (copy_fn and 135 or 65)
             local cur_x = (imgui.GetCursorPosX and imgui.GetCursorPosX()) or 160
@@ -1505,7 +1555,18 @@ local function md_editor_render_content()
             if imgui.PushFont then
                 imgui.PushFont(editor_font, editor_font_size)
             end
-            local changed, new_text = imgui.InputTextMultiline("##editor_split_" .. editor_epoch, editor_text, MAX_TEXT_BYTES, -1, -1, editor_input_flags)
+
+            -- Expand input height to match line content so SplitEditorChild possesses the scroll range
+            local line_h = (imgui.GetTextLineHeightWithSpacing and imgui.GetTextLineHeightWithSpacing()) or (editor_font_size * 1.35)
+            local avail_pw, avail_ph = imgui.GetContentRegionAvail()
+            local visual_lines = 0
+            for line in string.gmatch((editor_text or "") .. "\n", "(.-)\r?\n") do
+                local wrap_chars = math.max(12, math.floor(left_w / (9.5 * content_zoom)))
+                visual_lines = visual_lines + math.max(1, math.ceil(#line / wrap_chars))
+            end
+            local editor_box_h = math.max(avail_ph or 200, (visual_lines + 4) * line_h + 60)
+
+            local changed, new_text = imgui.InputTextMultiline("##editor_split_" .. editor_epoch, editor_text, MAX_TEXT_BYTES, -1, editor_box_h, editor_input_flags)
             if imgui.PopFont then
                 imgui.PopFont()
             end
@@ -1515,19 +1576,101 @@ local function md_editor_render_content()
             elseif changed and new_text then
                 editor_text = new_text
             end
+
+            -- Auto-scroll to bottom on Quick Action insert
+            if should_scroll_to_bottom then
+                if imgui.SetScrollHereY then
+                    imgui.SetScrollHereY(1.0)
+                end
+                sync_scroll_ratio = 1.0
+                active_scroll_source = "editor"
+                should_scroll_to_bottom = false
+            end
+
+            -- Track scroll if editor pane is hovered or active
+            if imgui.IsWindowHovered and imgui.IsWindowHovered() then
+                if imgui.GetScrollMaxY and imgui.GetScrollY then
+                    local max_y = imgui.GetScrollMaxY()
+                    if max_y > 0 then
+                        sync_scroll_ratio = math.max(0.0, math.min(1.0, imgui.GetScrollY() / max_y))
+                        active_scroll_source = "editor"
+                    end
+                end
+            end
+
             imgui.EndChild()
         end
 
-        imgui.SameLine(0, 16)
+        -- Interactive Draggable Splitter Divider between Left & Right Panes
+        imgui.SameLine(0, 0)
+        imgui.InvisibleButton("##split_divider", splitter_w, pane_h)
+        if (imgui.IsItemHovered and imgui.IsItemHovered()) or (imgui.IsItemActive and imgui.IsItemActive()) then
+            local cursor_ew = (imgui.constant and imgui.constant.MouseCursor and imgui.constant.MouseCursor.ResizeEW) or 4
+            if imgui.SetMouseCursor then
+                imgui.SetMouseCursor(cursor_ew)
+            end
+        end
+        if imgui.IsItemActive and imgui.IsItemActive() then
+            if imgui.GetMouseDragDelta then
+                local dx, _ = imgui.GetMouseDragDelta(0, 0.0)
+                if dx ~= 0 then
+                    split_ratio = math.max(0.15, math.min(0.85, split_ratio + dx / math.max(1, avail_w)))
+                    if imgui.ResetMouseDragDelta then
+                        imgui.ResetMouseDragDelta(0)
+                    end
+                end
+            end
+        end
+        if imgui.IsItemHovered and imgui.IsItemHovered() and imgui.IsMouseDoubleClicked and imgui.IsMouseDoubleClicked(0) then
+            split_ratio = 0.50 -- Reset to 50/50 on double click
+        end
+
+        -- Subtle visual separator bar using window draw list
+        local add_rect = imgui.DrawList_AddRectFilled or imgui.AddRectFilled
+        if add_rect and imgui.GetItemRectMin and imgui.GetItemRectMax then
+            local p0_x, p0_y = imgui.GetItemRectMin()
+            local p1_x, p1_y = imgui.GetItemRectMax()
+            local is_act = imgui.IsItemActive and imgui.IsItemActive()
+            local is_hov = imgui.IsItemHovered and imgui.IsItemHovered()
+            local bar_col = 0x33FFFFFF -- subtle 20% white bar
+            if is_act then
+                bar_col = 0xCC66AAFF -- active drag accent
+            elseif is_hov then
+                bar_col = 0x8888BBFF -- hover accent
+            end
+            local mid_x = math.floor((p0_x + p1_x) * 0.5)
+            add_rect(mid_x - 1, p0_y + 2, mid_x + 1, p1_y - 2, bar_col, 1.0)
+        end
+
+        imgui.SameLine(0, 0)
 
         -- Right Pane: Live Rendered Preview (with Soft-Wrapping enabled)
-        if imgui.BeginChild("SplitPreviewChild", col_w, -28, 1) then
+        if imgui.BeginChild("SplitPreviewChild", right_w, pane_h, 1) then
+            -- Two-way proportional scroll sync: mirror scroll if editor was scrolled
+            if active_scroll_source == "editor" and imgui.GetScrollMaxY and imgui.SetScrollY then
+                local max_y = imgui.GetScrollMaxY()
+                if max_y > 0 then
+                    imgui.SetScrollY(sync_scroll_ratio * max_y)
+                end
+            end
+
             imgui.TextDisabled("LIVE RENDERED PREVIEW:")
 
             if imgui.SetWindowFontScale then
                 imgui.SetWindowFontScale(content_zoom)
             end
             imgui.MD.TextWrapped(format_tasks(editor_text))
+
+            -- Track scroll if preview pane is hovered or active
+            if imgui.IsWindowHovered and imgui.IsWindowHovered() then
+                if imgui.GetScrollMaxY and imgui.GetScrollY then
+                    local max_y = imgui.GetScrollMaxY()
+                    if max_y > 0 then
+                        sync_scroll_ratio = math.max(0.0, math.min(1.0, imgui.GetScrollY() / max_y))
+                        active_scroll_source = "preview"
+                    end
+                end
+            end
 
             imgui.EndChild()
         end
