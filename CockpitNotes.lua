@@ -1573,9 +1573,7 @@ local function md_editor_render_content()
                 split.word_wrap = new_wrap
                 editor_epoch = editor_epoch + 1
             end
-            if imgui.IsItemHovered and imgui.IsItemHovered() then
-                show_tooltip("**Auto-wrap (Word Wrap)**\n\nWrap long lines soft to pane width.\nClick or mouse-wheel to toggle on/off.\nUnchecked allows horizontal scrolling.")
-            end
+            show_tooltip("**Auto-wrap (Word Wrap)**\n\nWrap long lines soft to pane width.\nClick or mouse-wheel to toggle on/off.\nUnchecked allows horizontal scrolling.")
 
             imgui.Separator()
 
