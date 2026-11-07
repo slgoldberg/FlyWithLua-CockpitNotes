@@ -1,6 +1,6 @@
 # Cockpit Notes & Scratchpad
 
-![FlyWithLua](https://img.shields.io/badge/FlyWithLua-Phase_3_Suite-blue.png) ![X-Plane 12](https://img.shields.io/badge/Simulator-X--Plane_12-informational.png) ![Status](https://img.shields.io/badge/Status-Active-brightgreen.png)
+<badge blue>FlyWithLua Phase 3 Suite</badge> <badge>Simulator: X-Plane 12</badge> <badge green>Status: Active</badge>
 
 Welcome to **Cockpit Notes** for FlyWithLua!
 

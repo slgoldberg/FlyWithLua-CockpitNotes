@@ -2,7 +2,7 @@
 -- FlyWithLua Cockpit Markdown Editor & Live Previewer
 -- ----------------------------------------------------------------------------
 -- Author: Antigravity pair programming with Steve Goldberg (@slgoldberg)
--- Architecture: Roger2 (ImgWindow Contrib) & Sir Lance (FlyWithLua)
+-- Architecture: Roger2 (ImGee / ImgWindow) & Sir Lance (FlyWithLua)
 -- Description:
 --   An in-sim floating scratchpad, ATIS note-taker, and markdown editor with
 --   real-time preview, 1-click aviation templates, and markdown persistence.
@@ -89,6 +89,14 @@ local split = {
     word_wrap     = true,  -- Auto-wrap toggle on editor (defaults to ON)
 }
 
+-- Shared Theme Preset State (Charcoal, Rusty, Classic Dark)
+local theme_names = {
+    [0] = "Theme: Charcoal",
+    [1] = "Theme: Rusty",
+    [2] = "Theme: Dark"
+}
+local current_applied_theme_idx = nil
+
 -- ----------------------------------------------------------------------------
 -- File Persistence & In-Cockpit File Dialogs (Turnkey ImgWindow File Suite)
 -- ----------------------------------------------------------------------------
@@ -151,7 +159,7 @@ end
 -- Default scratchpad template loaded if no saved notes exist on disk
 local initial_doc = [[# Cockpit Notes & Scratchpad
 
-![FlyWithLua](https://img.shields.io/badge/FlyWithLua-Phase_3_Suite-blue.png) ![X-Plane 12](https://img.shields.io/badge/Simulator-X--Plane_12-informational.png) ![Status](https://img.shields.io/badge/Status-Active-brightgreen.png)
+<badge blue>FlyWithLua Phase 3 Suite</badge> <badge>Simulator: X-Plane 12</badge> <badge green>Status: Active</badge>
 
 Welcome to your in-cockpit **FlyWithLua Markdown Editor**!
 
@@ -1085,6 +1093,20 @@ local function md_editor_render_content()
     end
     show_tooltip("**About Cockpit Markdown Scratchpad**\n\nView features, version, and library credits.")
 
+    imgui.SameLine(0, 6)
+    local active_theme_idx = _G.FWL_ACTIVE_THEME_IDX or 0
+    local theme_clicked = false
+    local cur_theme_name = theme_names[active_theme_idx] or "Theme: Charcoal"
+    if imgui.SmallButton then
+        theme_clicked = imgui.SmallButton(cur_theme_name .. "##btn_notes_theme")
+    else
+        theme_clicked = imgui.Button(cur_theme_name .. "##btn_notes_theme")
+    end
+    if theme_clicked then
+        _G.FWL_ACTIVE_THEME_IDX = ((_G.FWL_ACTIVE_THEME_IDX or 0) + 1) % 3
+    end
+    show_tooltip("**Click to Switch Theme Preset**\n\nCycles through:\n* **Charcoal** (Muted graphite & slate - ImGee standard)\n* **Rusty** (Warm aviation bronze & terracotta from ABC)\n* **Classic Dark** (Default Dear ImGui electric blue)\n\n*(Synchronized across active FlyWithLua windows)*")
+
     local cur_top_x = (imgui.GetCursorPosX and imgui.GetCursorPosX()) or 260
     local zoom_group_w = 210
     local zoom_start = avail_w - zoom_group_w
@@ -1718,6 +1740,22 @@ end
 -- UI Builder Callback (Wrapped in pcall to guarantee Push/Pop font pairing)
 -- ----------------------------------------------------------------------------
 function md_editor_on_build(wnd, x, y)
+    -- Synchronize active theme preset across FlyWithLua windows
+    if _G.FWL_ACTIVE_THEME_IDX == nil then
+        _G.FWL_ACTIVE_THEME_IDX = 0
+    end
+    local target_theme = _G.FWL_ACTIVE_THEME_IDX
+    if current_applied_theme_idx ~= target_theme then
+        if target_theme == 0 then
+            if imgui.StyleColorsCharcoal then imgui.StyleColorsCharcoal() end
+        elseif target_theme == 1 then
+            if imgui.StyleColorsRusty then imgui.StyleColorsRusty() end
+        elseif target_theme == 2 then
+            if imgui.StyleColorsDark then imgui.StyleColorsDark() end
+        end
+        current_applied_theme_idx = target_theme
+    end
+
     if imgui.SetWindowFontScale then
         imgui.SetWindowFontScale(1.0)
     end
@@ -1751,6 +1789,7 @@ function md_editor_on_close(wnd)
     -- Capture window bounds before destruction
     capture_window_geometry()
     editor_wnd = nil
+    current_applied_theme_idx = nil
 end
 
 -- ----------------------------------------------------------------------------
