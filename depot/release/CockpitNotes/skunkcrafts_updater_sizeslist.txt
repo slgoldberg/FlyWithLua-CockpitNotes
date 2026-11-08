@@ -1,4 +1,4 @@
-CockpitNotes.lua|58767
+CockpitNotes.lua|82569
 changelog.txt|734
 notes/cockpit_notes.md|813
 notes/diversion_briefing.md|2255
