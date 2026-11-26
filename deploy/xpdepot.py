@@ -42,6 +42,7 @@ SYSTEM_IGNORE_FILES = {
     IGNORE_NAME,
     LCL_CONFIG,
     ".DS_Store",
+    ".gitkeep",
     "Thumbs.db",
 }
 
@@ -63,6 +64,19 @@ def load_list_file(filepath: str) -> set:
             if line and not line.startswith("#"):
                 items.add(line)
     return items
+
+def is_in_list(rel_path: str, item_set: set) -> bool:
+    """
+    Check if rel_path matches any entry in item_set, supporting exact match,
+    folder prefixes, and wildcard suffixes ('/*', '/**').
+    """
+    if rel_path in item_set:
+        return True
+    for item in item_set:
+        norm_item = item.rstrip("/*")
+        if rel_path == norm_item or rel_path.startswith(norm_item + "/"):
+            return True
+    return False
 
 def build_depot_headless(stage_dir: str, depot_dir: str, lock_status: bool = False):
     """
@@ -93,13 +107,13 @@ def build_depot_headless(stage_dir: str, depot_dir: str, lock_status: bool = Fal
             full_path = os.path.join(root, fname)
             rel_path = os.path.relpath(full_path, stage_dir).replace("\\", "/")
 
-            if fname in SYSTEM_IGNORE_FILES or rel_path in ignorelist:
+            if fname in SYSTEM_IGNORE_FILES or is_in_list(rel_path, ignorelist):
                 continue
 
             size = os.path.getsize(full_path)
             sizes_list[rel_path] = size
 
-            if rel_path in oncelist:
+            if is_in_list(rel_path, oncelist):
                 # -1 marks oncelist files: installed once, never overwritten on updates!
                 new_white[rel_path] = -1
                 print(f"    [ONCE - CRC -1] {rel_path} ({size} bytes)")
@@ -152,7 +166,7 @@ def build_depot_headless(stage_dir: str, depot_dir: str, lock_status: bool = Fal
                 parts = line.split("|", 1)
                 if len(parts) == 2:
                     cfg_entries[parts[0].strip()] = parts[1].strip()
-    
+
     if lock_status:
         cfg_entries["locked"] = "true"
     elif "locked" not in cfg_entries:
@@ -161,7 +175,8 @@ def build_depot_headless(stage_dir: str, depot_dir: str, lock_status: bool = Fal
     with open(rmt_cfg_path, "w", newline="\n", encoding="utf-8") as fh:
         for k, v in cfg_entries.items():
             fh.write(f"{k}|{v}\n")
-    print(f"==> Wrote client config: {rmt_cfg_path}")
+    print(f"==> Wrote depot config: {rmt_cfg_path}")
+
     print("==> Depot build completed successfully!")
 
 def main():

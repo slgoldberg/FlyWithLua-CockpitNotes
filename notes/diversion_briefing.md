@@ -37,8 +37,8 @@
 | **Estimated Touchdown FOB** | 5,500 | 01:10 | <badge icon=check green>SAFE</badge> |
 | **Final Legal Reserve** | 2,450 | 00:30 | Required |
 | **Usable Holding Margin** | +3,050 | +00:38 | <badge icon=check green>+38 min hold</badge> |
-| **Minimum Diversion Bingo** | 5,550 | — | <badge icon=warning yellow>BINGO</badge> |
-| **Emergency Fuel Threshold** | 2,450 | — | <badge icon=warning red>MAYDAY</badge> |
+| **Minimum Diversion Bingo** | 5,550 | -- | <badge icon=warning yellow>BINGO</badge> |
+| **Emergency Fuel Threshold** | 2,450 | -- | <badge icon=warning red>MAYDAY</badge> |
 
 ---
 

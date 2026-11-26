@@ -1,5 +1,9 @@
-module|https://slgoldberg.github.io/FlyWithLua-CockpitNotes/depot/beta/CockpitNotes
+zone|custom
+disabled|false
+module|https://slgoldberg.github.io/FlyWithLua-CockpitNotes/depot/release/CockpitNotes
 name|CockpitNotes
-version|1.0.2
+version|1.1.0
 locked|false
-channel.release|https://slgoldberg.github.io/FlyWithLua-CockpitNotes/depot/release/CockpitNotes
+main_name|Stable
+channel.Latest|https://slgoldberg.github.io/FlyWithLua-CockpitNotes/depot/beta/CockpitNotes
+changelog|changelog.txt
