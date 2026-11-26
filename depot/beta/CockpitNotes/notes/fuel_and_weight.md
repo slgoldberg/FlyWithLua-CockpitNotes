@@ -11,7 +11,7 @@
 ## Weight & Balance Limits
 | Parameter | Planned (lbs) | Max Limit (lbs) | Margin | Status |
 | :--- | :---: | :---: | :---: | :---: |
-| **OEW** (Operating Empty) | 91,300 | — | — | <badge icon=check green>OK</badge> |
+| **OEW** (Operating Empty) | 91,300 | -- | -- | <badge icon=check green>OK</badge> |
 | **Payload** (Pax + Cargo) | 35,400 | 43,000 | +7,600 | <badge icon=check green>OK</badge> |
 | **ZFW** (Zero Fuel Weight) | 126,700 | 138,300 | +11,600 | <badge icon=check green>+11,600 lbs</badge> |
 | **TOW** (Takeoff Weight) | 145,500 | 174,200 | +28,700 | <badge icon=check green>+28,700 lbs</badge> |
