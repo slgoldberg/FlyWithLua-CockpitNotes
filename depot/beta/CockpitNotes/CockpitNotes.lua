@@ -14,7 +14,7 @@ if not SUPPORTS_FLOATING_WINDOWS then
 end
 
 -- Anchor script directory at boot so get_notes_dir() never decays to root Scripts/
-local COCKPIT_NOTES_VERSION = "1.1.2"
+local COCKPIT_NOTES_VERSION = "1.1.1"
 local SCRIPT_BASE_DIR = (CURRENT_SCRIPT_DIRECTORY and #CURRENT_SCRIPT_DIRECTORY > 0) and CURRENT_SCRIPT_DIRECTORY or "FlyWithLua/Scripts/CockpitNotes"
 
 -- ----------------------------------------------------------------------------
