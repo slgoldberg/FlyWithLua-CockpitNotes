@@ -6,13 +6,13 @@ on:
       action:
         description: 'Depot publish action(s) and channel(s)'
         required: true
-        default: 'Publish to beta only (keep release as-is)'
+        default: 'Publish to Latest only (keep Stable as-is)'
         type: choice
         options:
-          - 'Publish to beta only (keep release as-is)'
-          - 'Publish to release only (keep beta as-is)'
-          - 'Promote beta->release, then publish to beta'
-          - 'Publish to BOTH beta AND release'
+          - 'Publish to Latest only (keep Stable as-is)'
+          - 'Publish to Stable only (keep Latest as-is)'
+          - 'Promote Latest->Stable, then publish to Latest'
+          - 'Publish to BOTH Latest AND Stable'
       create_release:
         description: 'Tag for release history (creates/updates tag)'
         required: true
@@ -58,15 +58,15 @@ jobs:
           echo "version=${CN_VER}" >> "$GITHUB_OUTPUT"
           echo "Validated COCKPIT_NOTES_VERSION: ${CN_VER}"
 
-      - name: Verify gh-pages beta exists when promoting first
-        if: inputs.action == 'Promote beta->release, then publish to beta'
+      - name: Verify gh-pages Latest depot exists when promoting first
+        if: inputs.action == 'Promote Latest->Stable, then publish to Latest'
         run: |
           git fetch origin gh-pages:refs/remotes/origin/gh-pages || {
-            echo "::error::Branch 'gh-pages' does not exist yet -- cannot promote existing beta."
+            echo "::error::Branch 'gh-pages' does not exist yet -- cannot promote existing Latest (depot/beta)."
             exit 1
           }
           if ! git cat-file -e origin/gh-pages:depot/beta/CockpitNotes/skunkcrafts_updater.cfg 2>/dev/null; then
-            echo "::error::depot/beta/CockpitNotes/skunkcrafts_updater.cfg not found on gh-pages -- cannot promote existing beta."
+            echo "::error::depot/beta/CockpitNotes/skunkcrafts_updater.cfg not found on gh-pages -- cannot promote existing Latest."
             exit 1
           fi
 
@@ -77,13 +77,13 @@ jobs:
         run: |
           chmod +x deploy/stage.sh deploy/xpdepot.py
           case "$PUBLISH_ACTION" in
-            "Publish to beta only (keep release as-is)"|"Promote beta->release, then publish to beta")
+            "Publish to Latest only (keep Stable as-is)"|"Promote Latest->Stable, then publish to Latest")
               ./deploy/stage.sh beta --build-depot
               ;;
-            "Publish to release only (keep beta as-is)")
+            "Publish to Stable only (keep Latest as-is)")
               ./deploy/stage.sh release --build-depot
               ;;
-            "Publish to BOTH beta AND release")
+            "Publish to BOTH Latest AND Stable")
               ./deploy/stage.sh all --build-depot
               ;;
             *)
@@ -118,19 +118,19 @@ jobs:
           mkdir -p depot/beta depot/release
 
           case "$PUBLISH_ACTION" in
-            "Publish to beta only (keep release as-is)")
+            "Publish to Latest only (keep Stable as-is)")
               rm -rf "$BETA_DIR"
               cp -a "$STAGE_DEPOT_ROOT/beta/CockpitNotes" "$BETA_DIR"
-              COMMIT_MSG="chore(depot): publish ${CN_VERSION} to beta"
+              COMMIT_MSG="chore(depot): publish ${CN_VERSION} to Latest (depot/beta)"
               ;;
 
-            "Publish to release only (keep beta as-is)")
+            "Publish to Stable only (keep Latest as-is)")
               rm -rf "$REL_DIR"
               cp -a "$STAGE_DEPOT_ROOT/release/CockpitNotes" "$REL_DIR"
-              COMMIT_MSG="chore(depot): publish ${CN_VERSION} to release"
+              COMMIT_MSG="chore(depot): publish ${CN_VERSION} to Stable (depot/release)"
               ;;
 
-            "Promote beta->release, then publish to beta")
+            "Promote Latest->Stable, then publish to Latest")
               if [[ ! -f "$BETA_DIR/skunkcrafts_updater.cfg" ]]; then
                 echo "::error::Cannot promote: $BETA_DIR/skunkcrafts_updater.cfg missing on gh-pages."
                 exit 1
@@ -140,14 +140,14 @@ jobs:
               cp -a "$BETA_DIR" "$REL_DIR"
               rm -rf "$BETA_DIR"
               cp -a "$STAGE_DEPOT_ROOT/beta/CockpitNotes" "$BETA_DIR"
-              COMMIT_MSG="chore(depot): promote beta (${PROMOTED_VER}) -> release, publish ${CN_VERSION} to beta"
+              COMMIT_MSG="chore(depot): promote Latest (${PROMOTED_VER}) -> Stable, publish ${CN_VERSION} to Latest"
               ;;
 
-            "Publish to BOTH beta AND release")
+            "Publish to BOTH Latest AND Stable")
               rm -rf "$BETA_DIR" "$REL_DIR"
               cp -a "$STAGE_DEPOT_ROOT/beta/CockpitNotes" "$BETA_DIR"
               cp -a "$STAGE_DEPOT_ROOT/release/CockpitNotes" "$REL_DIR"
-              COMMIT_MSG="chore(depot): publish ${CN_VERSION} to beta and release"
+              COMMIT_MSG="chore(depot): publish ${CN_VERSION} to Latest and Stable"
               ;;
           esac
 
@@ -174,8 +174,8 @@ jobs:
             echo "### SkunkCrafts Publish Summary"
             echo "- **Selected action:** \`${PUBLISH_ACTION}\`"
             echo "- **Depot update:** ${DEPOT_RESULT}"
-            echo "- **Live \`Latest\` (beta) channel version:** \`${CUR_BETA}\`"
-            echo "- **Live \`Stable\` (release) channel version:** \`${CUR_REL}\`"
+            echo "- **Live \`Latest\` channel version:** \`${CUR_BETA}\` (\`depot/beta\`)"
+            echo "- **Live \`Stable\` channel version:** \`${CUR_REL}\` (\`depot/release\`)"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Package Release ZIP and update Git tag

@@ -1,4 +1,4 @@
-name: 'SkunkCrafts: Copy "beta" to "release"'
+name: 'SkunkCrafts: Copy "Latest" to "Stable"'
 
 on:
   workflow_dispatch:
@@ -27,7 +27,7 @@ jobs:
           ref: gh-pages
           path: gh-pages-tree
 
-      - name: Copy beta depot wholesale to release depot
+      - name: Copy Latest (depot/beta) wholesale to Stable (depot/release)
         run: |
           cd gh-pages-tree
           BETA_DIR="depot/beta/CockpitNotes"
@@ -55,10 +55,10 @@ jobs:
 
           git add -A "$REL_DIR"
           if git diff --cached --quiet; then
-            MSG="No changes needed -- 'release' already matches 'beta' (version ${BETA_VER})."
+            MSG="No changes needed -- 'Stable' already matches 'Latest' (version ${BETA_VER})."
             echo "$MSG"
             {
-              echo "### SkunkCrafts: Copy \"beta\" to \"release\""
+              echo "### SkunkCrafts: Copy \"Latest\" to \"Stable\""
               echo "- **Status:** $MSG"
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
@@ -66,14 +66,14 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(depot): promote beta (${BETA_VER}) -> release (was ${OLD_REL_VER})"
+          git commit -m "chore(depot): promote Latest (${BETA_VER}) -> Stable (was ${OLD_REL_VER})"
           git push origin gh-pages
 
-          MSG="Successfully copied 'beta' (version ${BETA_VER}) to 'release' (previously ${OLD_REL_VER})."
+          MSG="Successfully copied 'Latest' (version ${BETA_VER}) to 'Stable' (previously ${OLD_REL_VER})."
           echo "$MSG"
           {
-            echo "### SkunkCrafts: Copy \"beta\" to \"release\""
+            echo "### SkunkCrafts: Copy \"Latest\" to \"Stable\""
             echo "- **Promoted version:** \`${BETA_VER}\`"
-            echo "- **Previous release version:** \`${OLD_REL_VER}\`"
+            echo "- **Previous Stable version:** \`${OLD_REL_VER}\`"
             echo "- **Result:** $MSG"
           } >> "$GITHUB_STEP_SUMMARY"

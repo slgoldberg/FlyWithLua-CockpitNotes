@@ -92,12 +92,12 @@ This repository serves as the official reference implementation for packaging a 
      channel.Latest|https://<user>.github.io/<repo>/depot/beta/CockpitNotes
      changelog|changelog.txt
      ```
-   * Because the channel declaration is identical in both depots, promoting `beta` to `release` is a pure wholesale directory copy on `gh-pages` (`SkunkCrafts: Copy "beta" to "release"`) with zero rebuilds or re-stamping.
+   * Because the channel declaration is identical in both depots, promoting `Latest` (`depot/beta`) to `Stable` (`depot/release`) is a pure wholesale directory copy on `gh-pages` (`SkunkCrafts: Copy "Latest" to "Stable"`) with zero rebuilds or re-stamping.
 2. **Explicit Manual Publishing (`workflow_dispatch`):**
    * Pushing commits to `master` does **not** automatically overwrite live user depots.
    * When ready to ship, open **Actions** on GitHub and run either:
-     * **SkunkCrafts: Publish latest build...** (`scu_publish.yml`) -- publish `master` to `beta`, `release`, promote `beta->release` then publish `beta`, or publish to both, with an optional GitHub Release & ZIP.
-     * **SkunkCrafts: Copy "beta" to "release"** (`scu_beta2release.yml`) -- promote the exact tested `beta` depot wholesale to `release`.
+     * **SkunkCrafts: Publish latest build...** (`scu_publish.yml`) -- publish `master` to `Latest`, `Stable`, promote `Latest->Stable` then publish `Latest`, or publish to both, with an optional GitHub Release & ZIP.
+     * **SkunkCrafts: Copy "Latest" to "Stable"** (`scu_beta2release.yml`) -- promote the exact tested `Latest` depot (`depot/beta`) wholesale to `Stable` (`depot/release`).
 3. **Server Config vs. Client Config:**
    * In Staging (Layer 2), the prototype config file is named **`skunkcrafts_updater_config.txt`**, stamped dynamically from `COCKPIT_NOTES_VERSION` in `CockpitNotes.lua`.
    * When `xpdepot.py` builds the Depot (Layer 3), it translates `skunkcrafts_updater_config.txt` into **`skunkcrafts_updater.cfg`** for client consumption.
