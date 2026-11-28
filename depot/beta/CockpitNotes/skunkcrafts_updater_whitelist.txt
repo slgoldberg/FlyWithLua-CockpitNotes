@@ -1,8 +1,8 @@
-CockpitNotes.lua|245676141
-changelog.txt|3936398705
+CockpitNotes.lua|3412040356
+changelog.txt|3091049485
 notes/cockpit_notes.md|-1
 notes/diversion_briefing.md|-1
 notes/fuel_and_weight.md|-1
 notes/ifr_navlog.md|-1
 notes/metar_taf_scratchpad.md|-1
-readme.txt|365915967
+readme.txt|859118616

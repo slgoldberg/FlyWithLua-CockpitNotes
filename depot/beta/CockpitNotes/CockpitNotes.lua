@@ -14,7 +14,7 @@ if not SUPPORTS_FLOATING_WINDOWS then
 end
 
 -- Anchor script directory at boot so get_notes_dir() never decays to root Scripts/
-local COCKPIT_NOTES_VERSION = "1.1.1"
+local COCKPIT_NOTES_VERSION = "1.1.2"
 local SCRIPT_BASE_DIR = (CURRENT_SCRIPT_DIRECTORY and #CURRENT_SCRIPT_DIRECTORY > 0) and CURRENT_SCRIPT_DIRECTORY or "FlyWithLua/Scripts/CockpitNotes"
 
 -- ----------------------------------------------------------------------------
@@ -83,11 +83,13 @@ local last_zoom_change_time = 0 -- Timestamp of last zoom adjustment for tooltip
 local dec_repeat_count = 0   -- Counter to throttle repeat speed on [-] (1/4 rate)
 local inc_repeat_count = 0   -- Counter to throttle repeat speed on [+] (1/4 rate)
 
--- Split View Layout State (table-bundled to respect LuaJIT 60 upvalue limit)
+-- Split View & Template State (table-bundled to respect LuaJIT 60 upvalue limit)
 local split = {
-    ratio         = 0.50,  -- Draggable divider ratio (clamped 0.15 to 0.85)
-    should_scroll = false, -- Auto-scroll flag triggered on Quick Action insertion
-    word_wrap     = true,  -- Auto-wrap toggle on editor (defaults to ON)
+    ratio             = 0.50,  -- Draggable divider ratio (clamped 0.15 to 0.85)
+    should_scroll     = false, -- Auto-scroll flag triggered on Quick Action insertion
+    word_wrap         = true,  -- Auto-wrap toggle on editor (defaults to ON)
+    template_idx      = 0,     -- Active index in Aviation Templates SelectPulldown (0 = "Aviation Templates...")
+    pre_template_text = nil,   -- Snapshot of buffer before browsing templates (restored on return to 0)
 }
 
 -- Shared Theme Preset State (5 ImGee Themes)
@@ -228,8 +230,8 @@ local about_markdown_text = "# FlyWithLua Cockpit Notes\n<badge green>v" .. COCK
 * **Interactive GFM Tables:** Standard GitHub Flavored Markdown tables (`| Col 1 | Col 2 |`) with drag-resizable column dividers, right-border table width adjustment, and column sorting.
 * **Async Remote Images & Badges:** Non-blocking background worker threads for `![Badge](https://img.shields.io/...)` badges and online diagrams without sim frame drops.
 * **Procedural Vector Icons & Annunciators:** Native zero-font vector icons (`<icon blue plane />`, `:check:`, `#[^](ICON_CARET_UP)`, `↺`, `▲`) and live annunciator capsules (`<pill icon=plane>...</pill>`).
-* **Zero-Scroll-Leak Pulldowns:** Non-capturing `imgui.SelectPulldown` theme selector with mouse-wheel cycling and Lens UI tooltips without stealing scroll from your notes.
-* **Directional Anchored Action Popups:** One-shot Aviation Templates (`PopupAnchor.BelowItem`) and Quick Actions (`PopupAnchor.AboveItem`) menus open cleanly from toolbars without accidental mouse-wheel overwrites.
+* **Zero-Scroll-Leak Pulldowns:** Non-capturing `imgui.SelectPulldown` theme and template selectors with open-menu mouse-wheel cycling, Lens UI per-item tooltips, and non-destructive buffer restore.
+* **Directional Blossoming Popups:** Quick action menus blossom upward (`PopupAnchor.AboveItem`) from the bottom status bar without spilling off the screen.
 * **Live Markdown Typography:** Headers (`#`, `##`), **bold**, *italic*, <u>underline</u>, ~~strikethrough~~, bulleted lists, and formatted code blocks with syntax styling.
 * **Dual-Bracket Hyperlinks:** Standard CommonMark `[Label](url)` and `![Alt](img)` links supported side-by-side with legacy `{...}` brackets.
 * **In-Cockpit File Management:** Turnkey C++11 native directory combo (`imgui.FilePickerCombo`) and in-viewport modal `[Open...]` and `[Save As...]` dialogs.
@@ -583,7 +585,7 @@ local template_names = {
 }
 
 local template_tips = {
-    "Choose a pre-formatted flight template to insert into your note",
+    "Select a pre-formatted flight template (return here to restore your previous note)",
     "Standard ATIS copy pad with airport, weather, runways and NOTAMs",
     "Full IFR clearance CRAFT briefing and verification checklist",
     "Pre-flight cockpit preparation and avionics setup checklist",
@@ -747,6 +749,8 @@ local function load_note_from_full_path(chosen_path)
         current_filename = fname
         current_note_file = fname
         sync_window_note_base_dir(chosen_path)
+        split.template_idx = 0
+        split.pre_template_text = nil
         editor_epoch = editor_epoch + 1
         just_formatted = true
         save_status_msg = "Loaded: " .. fname
@@ -799,6 +803,8 @@ local function load_note(filename)
         current_filename = filename
         current_note_file = filename
         sync_window_note_base_dir(nil)
+        split.template_idx = 0
+        split.pre_template_text = nil
         editor_epoch = editor_epoch + 1
         just_formatted = true
         save_status_msg = "Loaded: " .. filename
@@ -1081,6 +1087,8 @@ local function render_bottom_status_bar(avail_w)
         imgui.Separator()
         if imgui.MenuItem("Clear Note Scratchpad") then
             editor_text = ""
+            split.template_idx = 0
+            split.pre_template_text = nil
             editor_epoch = editor_epoch + 1
             just_formatted = true
         end
@@ -1450,6 +1458,8 @@ local function md_editor_render_content()
                 current_filename = file_name
                 current_note_file = file_name
                 editor_text = "# " .. raw_name .. "\n\n"
+                split.template_idx = 0
+                split.pre_template_text = nil
                 editor_epoch = editor_epoch + 1
                 just_formatted = true
                 save_note(file_name)
@@ -1503,64 +1513,59 @@ local function md_editor_render_content()
             wrap_or_insert("![Badge](https://img.shields.io/badge/", "-blue.png)", "Title-Value")
         end
 
-        -- Templates Menu (One-shot action button + downward anchored popup)
-        -- Uses a click-to-open action popup instead of SelectPulldown so
-        -- browsing or mouse-wheeling never accidentally overwrites the active note.
+        -- Templates Dropdown (Zero-Scroll-Leak SelectPulldown with live wheel cycling & non-destructive restore)
         imgui.SameLine()
         imgui.TextUnformatted("|")
         imgui.SameLine()
-        local tpl_btn_clicked = false
-        if imgui.MD and imgui.MD.ButtonMD then
-            tpl_btn_clicked = imgui.MD.ButtonMD("Aviation Templates... <icon caret-down />##templates_btn")
-        elseif imgui.ButtonMD then
-            tpl_btn_clicked = imgui.ButtonMD("Aviation Templates... <icon caret-down />##templates_btn")
-        elseif imgui.Button then
-            tpl_btn_clicked = imgui.Button("Aviation Templates... v##templates_btn")
-        end
-        if tpl_btn_clicked then
-            if imgui.OpenPopupAtItem then
-                imgui.OpenPopupAtItem("##TemplatesPopup",
-                    (imgui.PopupAnchor and imgui.PopupAnchor.BelowItem) or 0,
-                    (imgui.PopupAlign and imgui.PopupAlign.Left) or 0)
-            else
-                imgui.OpenPopup("##TemplatesPopup")
-            end
-        end
-        show_tooltip("**Aviation Templates**\n\nClick to open a menu of pre-formatted cockpit checklists and scratchpads:\n* **ATIS Copy Pad**\n* **IFR Clearance (CRAFT)**\n* **Pre-Flight Checklist**\n* **IFR Navigation Log (NavLog)**\n* **Fuel & Weight Planning**\n* **Diversion Briefing**\n* **METAR / TAF Scratchpad**\n* **FlyWithLua Scratchpad**")
-
-        local tpl_popup_open = false
-        if imgui.BeginAnchoredPopup then
-            tpl_popup_open = imgui.BeginAnchoredPopup("##TemplatesPopup")
-        elseif imgui.BeginPopup then
-            tpl_popup_open = imgui.BeginPopup("##TemplatesPopup")
-        end
-        if tpl_popup_open then
-            imgui.TextDisabled("AVIATION TEMPLATES (replaces active buffer)")
-            imgui.Separator()
-            for i = 2, #template_names do
-                local name = template_names[i]
-                local item_clicked = false
-                if imgui.MenuItemLink then
-                    item_clicked = imgui.MenuItemLink(name)
-                elseif imgui.MenuItem then
-                    item_clicked = imgui.MenuItem(name)
-                elseif imgui.Selectable then
-                    item_clicked = imgui.Selectable(name, false)
+        if imgui.SelectPulldown then
+            local changed, new_idx = imgui.SelectPulldown("##templates_pulldown", split.template_idx, template_names, template_tips, 195, nil, nil, true, true)
+            if changed and new_idx ~= nil then
+                if split.template_idx == 0 and new_idx > 0 then
+                    split.pre_template_text = editor_text
                 end
-                if template_tips[i] then
-                    show_tooltip(template_tips[i])
-                end
-                if item_clicked and templates[name] then
-                    editor_text = templates[name]
-                    editor_epoch = editor_epoch + 1
-                    just_formatted = true
-                    if imgui.CloseCurrentPopup then
-                        imgui.CloseCurrentPopup()
+                split.template_idx = new_idx
+                if new_idx == 0 then
+                    if split.pre_template_text ~= nil then
+                        editor_text = split.pre_template_text
+                        split.pre_template_text = nil
+                        editor_epoch = editor_epoch + 1
+                        just_formatted = true
+                    end
+                else
+                    local chosen_name = template_names[new_idx + 1]
+                    if chosen_name and templates[chosen_name] then
+                        editor_text = templates[chosen_name]
+                        editor_epoch = editor_epoch + 1
+                        just_formatted = true
                     end
                 end
             end
-            imgui.EndPopup()
+        else
+            if imgui.SetNextItemWidth then
+                imgui.SetNextItemWidth(175)
+            end
+            if imgui.BeginCombo("##templates", template_names[split.template_idx + 1] or "Aviation Templates...", 0) then
+                local ok, err = pcall(function()
+                    for i = 2, #template_names do
+                        local name = template_names[i]
+                        if imgui.Selectable(name, split.template_idx == (i - 1)) then
+                            if split.template_idx == 0 then
+                                split.pre_template_text = editor_text
+                            end
+                            split.template_idx = i - 1
+                            editor_text = templates[name]
+                            editor_epoch = editor_epoch + 1
+                            just_formatted = true
+                        end
+                    end
+                end)
+                imgui.EndCombo()
+                if not ok then
+                    print("[FlyWithLua CockpitNotes] Error in Templates Combo: " .. tostring(err))
+                end
+            end
         end
+        show_tooltip("**Aviation Templates** (Click to open, then click or roll mouse wheel):\n* **ATIS Copy Pad**\n* **IFR Clearance (CRAFT)**\n* **Pre-Flight Checklist**\n* **IFR Navigation Log (NavLog)**\n* **Fuel & Weight Planning**\n* **Diversion Briefing**\n* **METAR / TAF Scratchpad**\n* **FlyWithLua Scratchpad**\n\n*(Return to **Aviation Templates...** to restore your previous note)*")
 
         imgui.Separator()
     end
@@ -1584,6 +1589,8 @@ local function md_editor_render_content()
             end
             if toolbar_button("Clear##full", "**Clear Buffer**\n\nEmpty the entire editor scratchpad.") then
                 editor_text = ""
+                split.template_idx = 0
+                split.pre_template_text = nil
                 editor_epoch = editor_epoch + 1
                 just_formatted = true
             end
@@ -1617,6 +1624,10 @@ local function md_editor_render_content()
                 just_formatted = false
             elseif changed and new_text then
                 editor_text = new_text
+                if split.template_idx ~= 0 then
+                    split.template_idx = 0
+                    split.pre_template_text = nil
+                end
             end
 
             -- Auto-scroll to bottom on Quick Action insert in single-editor mode
@@ -1713,6 +1724,10 @@ local function md_editor_render_content()
                 just_formatted = false
             elseif changed and new_text then
                 editor_text = new_text
+                if split.template_idx ~= 0 then
+                    split.template_idx = 0
+                    split.pre_template_text = nil
+                end
             end
 
             -- Auto-scroll to bottom on Quick Action insert
