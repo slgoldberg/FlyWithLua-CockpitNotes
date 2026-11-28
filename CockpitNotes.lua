@@ -14,7 +14,7 @@ if not SUPPORTS_FLOATING_WINDOWS then
 end
 
 -- Anchor script directory at boot so get_notes_dir() never decays to root Scripts/
-local COCKPIT_NOTES_VERSION = "1.1.0"
+local COCKPIT_NOTES_VERSION = "1.1.1"
 local SCRIPT_BASE_DIR = (CURRENT_SCRIPT_DIRECTORY and #CURRENT_SCRIPT_DIRECTORY > 0) and CURRENT_SCRIPT_DIRECTORY or "FlyWithLua/Scripts/CockpitNotes"
 
 -- ----------------------------------------------------------------------------
@@ -228,8 +228,8 @@ local about_markdown_text = "# FlyWithLua Cockpit Notes\n<badge green>v" .. COCK
 * **Interactive GFM Tables:** Standard GitHub Flavored Markdown tables (`| Col 1 | Col 2 |`) with drag-resizable column dividers, right-border table width adjustment, and column sorting.
 * **Async Remote Images & Badges:** Non-blocking background worker threads for `![Badge](https://img.shields.io/...)` badges and online diagrams without sim frame drops.
 * **Procedural Vector Icons & Annunciators:** Native zero-font vector icons (`<icon blue plane />`, `:check:`, `#[^](ICON_CARET_UP)`, `↺`, `▲`) and live annunciator capsules (`<pill icon=plane>...</pill>`).
-* **Zero-Scroll-Leak Pulldowns:** Non-capturing `imgui.SelectPulldown` lets you browse templates without stealing mouse-wheel scroll from your notes.
-* **Directional Blossoming Popups:** Quick action menus blossom upward (`PopupAnchor.AboveItem`) from the bottom status bar without spilling off the screen.
+* **Zero-Scroll-Leak Pulldowns:** Non-capturing `imgui.SelectPulldown` theme selector with mouse-wheel cycling and Lens UI tooltips without stealing scroll from your notes.
+* **Directional Anchored Action Popups:** One-shot Aviation Templates (`PopupAnchor.BelowItem`) and Quick Actions (`PopupAnchor.AboveItem`) menus open cleanly from toolbars without accidental mouse-wheel overwrites.
 * **Live Markdown Typography:** Headers (`#`, `##`), **bold**, *italic*, <u>underline</u>, ~~strikethrough~~, bulleted lists, and formatted code blocks with syntax styling.
 * **Dual-Bracket Hyperlinks:** Standard CommonMark `[Label](url)` and `![Alt](img)` links supported side-by-side with legacy `{...}` brackets.
 * **In-Cockpit File Management:** Turnkey C++11 native directory combo (`imgui.FilePickerCombo`) and in-viewport modal `[Open...]` and `[Save As...]` dialogs.
@@ -1503,42 +1503,64 @@ local function md_editor_render_content()
             wrap_or_insert("![Badge](https://img.shields.io/badge/", "-blue.png)", "Title-Value")
         end
 
-        -- Templates Dropdown (Zero-Scroll-Leak SelectPulldown)
+        -- Templates Menu (One-shot action button + downward anchored popup)
+        -- Uses a click-to-open action popup instead of SelectPulldown so
+        -- browsing or mouse-wheeling never accidentally overwrites the active note.
         imgui.SameLine()
         imgui.TextUnformatted("|")
         imgui.SameLine()
-        if imgui.SelectPulldown then
-            local changed, new_idx = imgui.SelectPulldown("##templates_pulldown", 0, template_names, template_tips, 195)
-            if changed and new_idx and new_idx > 0 then
-                local chosen_name = template_names[new_idx + 1]
-                if chosen_name and templates[chosen_name] then
-                    editor_text = templates[chosen_name]
-                    editor_epoch = editor_epoch + 1
-                    just_formatted = true
-                end
-            end
-        else
-            if imgui.SetNextItemWidth then
-                imgui.SetNextItemWidth(175)
-            end
-            if imgui.BeginCombo("##templates", "Aviation Templates...", 0) then
-                local ok, err = pcall(function()
-                    for i = 2, #template_names do
-                        local name = template_names[i]
-                        if imgui.Selectable(name, false) then
-                            editor_text = templates[name]
-                            editor_epoch = editor_epoch + 1
-                            just_formatted = true
-                        end
-                    end
-                end)
-                imgui.EndCombo()
-                if not ok then
-                    print("[FlyWithLua CockpitNotes] Error in Templates Combo: " .. tostring(err))
-                end
+        local tpl_btn_clicked = false
+        if imgui.MD and imgui.MD.ButtonMD then
+            tpl_btn_clicked = imgui.MD.ButtonMD("Aviation Templates... <icon caret-down />##templates_btn")
+        elseif imgui.ButtonMD then
+            tpl_btn_clicked = imgui.ButtonMD("Aviation Templates... <icon caret-down />##templates_btn")
+        elseif imgui.Button then
+            tpl_btn_clicked = imgui.Button("Aviation Templates... v##templates_btn")
+        end
+        if tpl_btn_clicked then
+            if imgui.OpenPopupAtItem then
+                imgui.OpenPopupAtItem("##TemplatesPopup",
+                    (imgui.PopupAnchor and imgui.PopupAnchor.BelowItem) or 0,
+                    (imgui.PopupAlign and imgui.PopupAlign.Left) or 0)
+            else
+                imgui.OpenPopup("##TemplatesPopup")
             end
         end
-        show_tooltip("**Aviation Templates**\n\nLoad pre-formatted cockpit checklists and scratchpads:\n* **ATIS Copy Pad**\n* **IFR Clearance (CRAFT)**\n* **Pre-Flight Checklist**\n* **IFR Navigation Log (NavLog)**\n* **Fuel & Weight Planning**\n* **Diversion Briefing**\n* **METAR / TAF Scratchpad**\n* **FlyWithLua Scratchpad**")
+        show_tooltip("**Aviation Templates**\n\nClick to open a menu of pre-formatted cockpit checklists and scratchpads:\n* **ATIS Copy Pad**\n* **IFR Clearance (CRAFT)**\n* **Pre-Flight Checklist**\n* **IFR Navigation Log (NavLog)**\n* **Fuel & Weight Planning**\n* **Diversion Briefing**\n* **METAR / TAF Scratchpad**\n* **FlyWithLua Scratchpad**")
+
+        local tpl_popup_open = false
+        if imgui.BeginAnchoredPopup then
+            tpl_popup_open = imgui.BeginAnchoredPopup("##TemplatesPopup")
+        elseif imgui.BeginPopup then
+            tpl_popup_open = imgui.BeginPopup("##TemplatesPopup")
+        end
+        if tpl_popup_open then
+            imgui.TextDisabled("AVIATION TEMPLATES (replaces active buffer)")
+            imgui.Separator()
+            for i = 2, #template_names do
+                local name = template_names[i]
+                local item_clicked = false
+                if imgui.MenuItemLink then
+                    item_clicked = imgui.MenuItemLink(name)
+                elseif imgui.MenuItem then
+                    item_clicked = imgui.MenuItem(name)
+                elseif imgui.Selectable then
+                    item_clicked = imgui.Selectable(name, false)
+                end
+                if template_tips[i] then
+                    show_tooltip(template_tips[i])
+                end
+                if item_clicked and templates[name] then
+                    editor_text = templates[name]
+                    editor_epoch = editor_epoch + 1
+                    just_formatted = true
+                    if imgui.CloseCurrentPopup then
+                        imgui.CloseCurrentPopup()
+                    end
+                end
+            end
+            imgui.EndPopup()
+        end
 
         imgui.Separator()
     end
