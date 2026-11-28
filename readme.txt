@@ -1,5 +1,5 @@
 ================================================================================
-FlyWithLua CockpitNotes (v1.1.1)
+FlyWithLua CockpitNotes (v1.1.2)
 ================================================================================
 An interactive in-cockpit Markdown scratchpad and flight notes system for
 X-Plane 12 and X-Plane 11 flight operations (requires FlyWithLua 2.8.23+).
