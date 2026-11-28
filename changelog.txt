@@ -2,26 +2,17 @@
 FlyWithLua CockpitNotes - Changelog
 ================================================================================
 
-Version 1.1.2 (Latest Channel - Templates SelectPulldown Fix)
+Version 1.1.1 (Latest Channel - Templates SelectPulldown Fix)
 --------------------------------------------------------------------------------
-- Restored "Aviation Templates..." as a real ImGee SelectPulldown with ResizeNS
-  open-menu cursor, circular mouse-wheel cycling across all 8 templates
-  (wrap = true, natural_list_order = true), and Lens UI per-item tooltips.
+- Fixed the "Aviation Templates..." SelectPulldown so mouse-wheel cycling steps
+  cleanly across all 8 templates (wrap = true, natural_list_order = true) with
+  ResizeNS open-menu cursor and Lens UI per-item tooltips instead of looping on
+  item 1 or clamping on wheel-up.
 - Added non-destructive buffer snapshot/restore: cycling away from item 0
   ("Aviation Templates...") snapshots the current note so returning to item 0
   restores your previous text without data loss; typing, clearing, or loading
   a note resets the picker cleanly to item 0.
-
-Version 1.1.1 (Latest Channel - Templates Menu Fix)
---------------------------------------------------------------------------------
-- Fixed the "Aviation Templates..." toolbar dropdown: replaced the stateful
-  SelectPulldown (which re-applied template 1 on every wheel-down tick and
-  clamped on wheel-up) with a one-shot action button and downward anchored
-  popup menu (OpenPopupAtItem / BeginAnchoredPopup) with per-item tooltips.
-  Templates now load only on explicit click, preventing accidental overwrites
-  while browsing.
-- Updated the About dialog capabilities list to accurately describe the
-  anchored Aviation Templates action popup and SelectPulldown theme selector.
+- Updated the About dialog capabilities list to match.
 
 Version 1.1.0 (FlyWithLua 2.8.23+ & SkunkCrafts Updater 4.2.18+ Parity)
 --------------------------------------------------------------------------------
